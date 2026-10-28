@@ -132,3 +132,22 @@ def test_api_key_from_file(tmp_path):
     assert api_key_from_env({"LUDUS_API_KEY": "env-key"}) == "env-key"
     with pytest.raises(SystemExit):
         api_key_from_env({})
+
+
+async def test_tls_server_name_is_sent_with_each_request():
+    seen = {}
+
+    def handler(request):
+        seen["extensions"] = request.extensions
+        return httpx.Response(200, json={})
+
+    broker = Broker(
+        "https://ludus.test:8080",
+        KEY,
+        frozenset({"TTL-1"}),
+        tls_server_name="ludus",
+        transport=httpx.MockTransport(handler),
+    )
+    await broker.request("GET", "/", {}, None)
+
+    assert seen["extensions"]["sni_hostname"] == "ludus"

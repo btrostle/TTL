@@ -7,6 +7,7 @@ Configuration comes from the environment:
     LUDUS_ALLOWED_RANGES  comma-separated range IDs agents may use
     LUDUS_CA_FILE         CA bundle for the Ludus certificate, or
     LUDUS_INSECURE_TLS=1  to skip verification
+    LUDUS_TLS_SERVER_NAME name the Ludus certificate is issued to, if not the URL's host
     BROKER_TOKEN          bearer token agents send to this server
     BROKER_HOST           listen address (default 0.0.0.0)
     BROKER_PORT           listen port (default 8765)
@@ -39,10 +40,13 @@ class Broker:
         api_key: str,
         allowed_ranges: frozenset[str],
         verify: str | bool = True,
+        tls_server_name: str | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
     ):
         self.api_key = api_key
         self.allowed_ranges = allowed_ranges
+        # Name to check the certificate against when it does not cover the URL's host.
+        self.extensions = {"sni_hostname": tls_server_name} if tls_server_name else {}
         self.client = httpx.AsyncClient(
             base_url=base_url.rstrip("/") + "/api/v2",
             headers={"X-API-KEY": api_key},
@@ -64,7 +68,9 @@ class Broker:
             sent = {"data": body or {}, "files": {"file": ("range-config.yml", file_text)}}
         else:
             sent = {"json": body} if body is not None else {}
-        response = await self.client.request(method.upper(), path, params=query, **sent)
+        response = await self.client.request(
+            method.upper(), path, params=query, extensions=self.extensions, **sent
+        )
         log.info("%s %s rangeID=%s -> %s", method.upper(), path, query.get("rangeID"), response.status_code)
 
         content_type = response.headers.get("content-type", "")
@@ -163,7 +169,7 @@ def main() -> None:
     else:
         sys.exit("set LUDUS_CA_FILE, or LUDUS_INSECURE_TLS=1 to skip certificate checks")
 
-    broker = Broker(env["LUDUS_URL"], api_key_from_env(env), ranges, verify)
+    broker = Broker(env["LUDUS_URL"], api_key_from_env(env), ranges, verify, env.get("LUDUS_TLS_SERVER_NAME"))
     host = env.get("BROKER_HOST", "0.0.0.0")
     app = build_server(broker).streamable_http_app(host=host)
     uvicorn.run(require_token(app, env["BROKER_TOKEN"]), host=host, port=int(env.get("BROKER_PORT", "8765")))
