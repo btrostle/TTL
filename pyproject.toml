@@ -1,0 +1,29 @@
+[project]
+name = "ttl-broker"
+version = "0.1.0"
+description = "Ludus broker: an MCP server that gives agents Ludus without Ludus credentials"
+authors = [
+    { name = "Brandon Trostle", email = "bttrostle@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp>=2.3.0",
+]
+
+[project.scripts]
+ttl-broker = "ttl_broker.server:main"
+
+[build-system]
+requires = ["uv_build>=0.12.21,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0",
+    "pytest-asyncio>=1.4.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
