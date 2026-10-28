@@ -3,7 +3,7 @@
 Configuration comes from the environment:
 
     LUDUS_URL             e.g. https://198.51.100.1:8080
-    LUDUS_API_KEY         held only by this process
+    LUDUS_API_KEY_FILE    file holding the Ludus key (or LUDUS_API_KEY)
     LUDUS_ALLOWED_RANGES  comma-separated range IDs agents may use
     LUDUS_CA_FILE         CA bundle for the Ludus certificate, or
     LUDUS_INSECURE_TLS=1  to skip verification
@@ -141,6 +141,15 @@ def build_server(broker: Broker) -> MCPServer:
     return server
 
 
+def api_key_from_env(env) -> str:
+    if env.get("LUDUS_API_KEY_FILE"):
+        with open(env["LUDUS_API_KEY_FILE"]) as f:
+            return f.read().strip()
+    if env.get("LUDUS_API_KEY"):
+        return env["LUDUS_API_KEY"]
+    sys.exit("set LUDUS_API_KEY_FILE or LUDUS_API_KEY")
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, stream=sys.stderr, format="%(asctime)s %(message)s")
     env = os.environ
@@ -154,7 +163,7 @@ def main() -> None:
     else:
         sys.exit("set LUDUS_CA_FILE, or LUDUS_INSECURE_TLS=1 to skip certificate checks")
 
-    broker = Broker(env["LUDUS_URL"], env["LUDUS_API_KEY"], ranges, verify)
+    broker = Broker(env["LUDUS_URL"], api_key_from_env(env), ranges, verify)
     host = env.get("BROKER_HOST", "0.0.0.0")
     app = build_server(broker).streamable_http_app(host=host)
     uvicorn.run(require_token(app, env["BROKER_TOKEN"]), host=host, port=int(env.get("BROKER_PORT", "8765")))

@@ -20,7 +20,7 @@ Run it on its own box, not the agent's, so the agent cannot read the key:
 
 ```sh
 export LUDUS_URL=https://198.51.100.1:8080
-export LUDUS_API_KEY=...            # only this process holds it
+export LUDUS_API_KEY_FILE=/path/to/key # only this process reads it
 export LUDUS_ALLOWED_RANGES=TTL-1,TTL-2
 export LUDUS_CA_FILE=/path/to/ludus-ca.pem   # or LUDUS_INSECURE_TLS=1
 export BROKER_TOKEN=...             # agents send this as a bearer token
@@ -37,3 +37,12 @@ Run the tests with `uv run pytest`.
 
 An agent runs one technique on one lab host and produces a run folder with the
 commands, outputs, and Splunk events.
+
+## Deployed broker
+
+The broker runs on `threattrails-dev.home:8765` as the systemd service
+`ttl-broker`, installed with `sudo sh deploy/install.sh` from a copy of this
+repo. It reads the Ludus key through systemd `LoadCredential` from
+`/etc/threattrails/secrets/ludus_api_key`. Its settings and bearer token are in
+`/etc/ttl-broker/env` (root only): `sudo sed -n 's/^BROKER_TOKEN=//p'
+/etc/ttl-broker/env`.

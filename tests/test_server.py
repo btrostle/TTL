@@ -120,3 +120,15 @@ async def test_tool_reports_ludus_unreachable():
 
     assert result.is_error
     assert "could not reach Ludus" in result.content[0].text
+
+
+def test_api_key_from_file(tmp_path):
+    from ttl_broker.server import api_key_from_env
+
+    key_file = tmp_path / "ludus_api_key"
+    key_file.write_text("file-key\n")
+
+    assert api_key_from_env({"LUDUS_API_KEY_FILE": str(key_file)}) == "file-key"
+    assert api_key_from_env({"LUDUS_API_KEY": "env-key"}) == "env-key"
+    with pytest.raises(SystemExit):
+        api_key_from_env({})

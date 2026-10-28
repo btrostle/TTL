@@ -1,0 +1,22 @@
+[Unit]
+Description=TTL Ludus broker (MCP)
+After=network-online.target wg-quick@ttlabsvc.service
+Wants=network-online.target
+
+[Service]
+DynamicUser=yes
+# systemd copies the key into a private directory only this service can read.
+LoadCredential=ludus_api_key:/etc/threattrails/secrets/ludus_api_key
+Environment=LUDUS_API_KEY_FILE=%d/ludus_api_key
+# LUDUS_URL, LUDUS_ALLOWED_RANGES, BROKER_TOKEN, TLS setting
+EnvironmentFile=/etc/ttl-broker/env
+WorkingDirectory=/opt/ttl-broker
+ExecStart=/opt/ttl-broker/.venv/bin/ttl-broker
+Restart=on-failure
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target
