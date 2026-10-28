@@ -1,6 +1,6 @@
 # TTL
 
-ThreatTrails Lab, restarted. Agents run techniques in a Ludus lab and return
+ThreatTrails Lab. Agents run techniques in a Ludus lab and return
 the commands, outputs, and telemetry.
 
 The previous project is archived at
