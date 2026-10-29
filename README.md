@@ -48,3 +48,13 @@ repo. It reads the Ludus key through systemd `LoadCredential` from
 (Proxmox's, issued to `ludus`) against `/opt/ttl-broker/ludus.pem`. Its settings and bearer token are in
 `/etc/ttl-broker/env` (root only): `sudo sed -n 's/^BROKER_TOKEN=//p'
 /etc/ttl-broker/env`.
+
+## Agents box
+
+`ttl-agents` (Ubuntu 24.04, Dev VLAN) runs the agent harnesses (herdr, Claude
+Code, Codex) as the unprivileged user `agent`. `deploy/agents-box.sh` sets it
+up from a fresh VM: a root-only WireGuard tunnel for the agents' own Ludus
+user, routing only the range subnets; no sudo for `agent`; and an nftables
+backstop that rejects `agent` traffic to the Ludus host. Agents reach Ludus
+only through the broker. The broker token is in
+`/home/agent/.config/ttl/broker.env`.
