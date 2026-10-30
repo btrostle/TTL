@@ -43,8 +43,10 @@ refused. Do not pass `userID`; the broker refuses it.
   snapshots. See the `ludus-deploy` skill for deploys.
 - `GET /range/ansibleinventory` returns range VM passwords. Use them, but never
   print or save them.
-- A 403 from Ludus means the broker's Ludus user lacks that right (for example
-  installing Ansible roles). Report it to the owner.
+- Roles, collections, and templates are the owner's. Report anything to
+  install or delete; do not try to do it yourself.
+- A 403 from Ludus means the broker's Ludus user lacks that right. Report it
+  to the owner.
 
 ## References
 

@@ -92,7 +92,7 @@ the plugin is not loaded on this Ludus server. Power off by hand.
 |---|---|
 | `ludus ansible role list`, `collection list` | `GET /ansible` |
 | `ludus ansible subscription-roles list` | `GET /ansible/subscription-roles` |
-| `ludus ansible role add`, `collection add`, `role scope` | Allowed by the broker, but Ludus returns 403 for the broker's user. Ask the owner to install the role globally |
+| `ludus ansible role add/rm`, `collection add`, `role scope`, `subscription-roles install` | Blocked. Report the role to the owner (see below) |
 
 ## Blueprints
 
@@ -104,8 +104,8 @@ the plugin is not loaded on this Ludus server. Power off by hand.
 | `ludus blueprint apply <id>` | `POST /blueprints/{blueprintID}/apply`, `body`: `{"rangeID": "ThreatTrails-MVP", "force": false}`. Replaces the range config; ask the owner first |
 | `ludus blueprint rm <id>` | Blocked. Report the blueprint to the owner (see below) |
 
-Sources (`/sources/...`) are also allowed, except deleting them; see
-`list_operations`.
+Sources (`/sources/...`) can be listed and synced. Deleting them and
+installing from them or from a blueprint are blocked; see `list_operations`.
 
 ## Blocked
 
@@ -120,4 +120,8 @@ These are refused by the broker. Do not try to reach them another way:
 - Deleting templates, blueprints, or sources: they are shared beyond this
   range. If one looks unused, tell the owner its name, why it can go, and what
   uses it, if anything. The owner deletes it.
+- Installing, removing, or moving Ansible roles and collections, including
+  through `/sources/{id}/install` and `/blueprints/{id}/install`. The owner
+  keeps the role pool. Check `GET /ansible`; if a role is missing, tell the
+  owner its Galaxy name or URL, the version, and why the test needs it.
 - Any `-u/--user` impersonation, and any range other than `ThreatTrails-MVP`.

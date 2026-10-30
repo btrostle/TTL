@@ -37,7 +37,7 @@ cause.
   Each run gets at least one VM further. Stop and report if a run makes no
   progress.
 - **"role ... was not found"**: the role is not installed globally. The broker
-  user cannot install roles (403). Ask the owner to run
+  blocks role installs. Ask the owner to run
   `ludus ansible role add <role> --global`.
 - **Router package install 404 from `security.debian.org`**: the range is
   using the Debian 11 router. The config must have the Debian 12 `router:`

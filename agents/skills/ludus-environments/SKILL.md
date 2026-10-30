@@ -13,8 +13,8 @@ something you can deploy on your own:
   means changing that range's config (the `ludus-range-config` skill).
 - The Proxmox host is short on memory. The range budget is about 25 GB of RAM
   in total. Most AD environments need more (GOAD needs about 40 GB).
-- Roles and collections must be installed globally by the owner. The broker's
-  Ludus user cannot install them.
+- Roles and collections must be installed globally by the owner. The broker
+  blocks installs, including source and blueprint installs.
 - Templates must already be built (`GET /templates`).
 
 ## Workflow

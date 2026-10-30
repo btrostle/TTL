@@ -18,7 +18,8 @@ broker as the `ludus-api` skill describes.
 3. **Keep the Debian 12 `router:` section.** Without it Ludus builds the
    Debian 11 router, which no longer builds.
 4. **Roles must be installed globally** by the owner. Check `GET /ansible`
-   before you add a role. The broker's Ludus user cannot install roles (403).
+   before you add a role. The broker blocks role installs; report a missing
+   role to the owner.
 5. **Templates must exist.** Check `GET /templates` before you use one.
 
 ## Ludus config rules
