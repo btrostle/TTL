@@ -51,12 +51,18 @@ Carry out authorized lab tasks inside the range. Outside it:
 | router | 10.3.20.254 | Range router | none needed |
 
 - Logins come from `GET /range/ansibleinventory` (`ansible_user` and
-  `ansible_ssh_pass` per host, `localuser` on all of them). Fetch them when you
-  need them. Never print them in your replies, and never write them to run
-  folders, logs, or files.
+  `ansible_ssh_pass` per host: `localuser` on ar-splunk, ar-linux, and
+  ar-windows, `kali` on kali). You are approved to access all range
+  passwords. They are not sensitive: you may print them, and store them in
+  run folders, logs, or files on `ttl-agents`.
 - Run lab tools from `kali` over SSH. Keep `ttl-agents` for
   orchestration and recording.
-- Splunk admin credentials are not documented yet. Ask the owner.
+- Splunk admin login: `admin` / `changeme123!`. Web is plain HTTP at
+  `http://10.3.20.1:8000`. The REST API is HTTPS on 8089 with a self-signed
+  certificate, for example
+  `curl -sk -u 'admin:changeme123!' https://10.3.20.1:8089/services/search/jobs/export -d search='| metadata type=hosts index=*' -d output_mode=csv`.
+- Windows events are in index `win` (sourcetype `XmlWinEventLog`) under host
+  `THREATTRAILS-MV`, the 15-character NetBIOS name, not `ar-windows`.
 
 ## Runs
 
@@ -69,5 +75,5 @@ Put each run in `~/runs/<YYYY-MM-DD>-<short-name>/`:
 - `outputs/`: raw output of each command.
 - `splunk/`: each search you ran and its results.
 
-Leave out passwords and tokens. If a command takes a secret, write a
-placeholder such as `<localuser password>`.
+Range VM passwords may appear in runs. Leave out broker tokens and any
+Ludus or Proxmox credentials.
