@@ -9,6 +9,8 @@
 #   Claude Code: ~/.claude/CLAUDE.md imports ~/.agents/AGENTS.md; ~/.claude/skills -> ~/.agents/skills
 set -eu
 
+[ "$(id -un)" = agent ] || { echo "Run this as the user agent on the agents box." >&2; exit 1; }
+
 mkdir -p ~/.agents ~/.codex ~/.pi/agent ~/.claude ~/ttl
 rm -rf ~/.agents/skills
 cp agents/AGENTS.md ~/.agents/AGENTS.md

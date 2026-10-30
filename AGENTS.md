@@ -22,3 +22,6 @@ Inside the lab, agents may carry out assigned security tests.
 
 - Keep it simple. Build the smallest thing that works, then improve it.
 - Never commit or print secrets.
+- This repository is public. Do not commit home network details (subnets,
+  host IPs, firewall rules, known gaps). Put them in `private/`, which is
+  gitignored. Lab notes for the owner are in `private/network-context.md`.
