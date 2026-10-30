@@ -37,7 +37,8 @@ Carry out authorized lab tasks inside the range. Outside it:
   `python3 ~/ttl/mcpcall.py '{"method": "GET", "path": "/range", "query": {"rangeID": "ThreatTrails-MVP"}}'`.
 - Every range operation needs `rangeID=ThreatTrails-MVP`.
 - `GET /openapi` returns the full Ludus API description.
-- For deploys, use the `ludus-deploy` skill.
+- Ludus skills: `ludus-api` (CLI commands as broker calls), `ludus-deploy`,
+  `ludus-range-config`, `ludus-troubleshooting`, `ludus-environments`.
 
 ## Range: ThreatTrails-MVP
 
