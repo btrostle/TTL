@@ -36,6 +36,15 @@ def test_credential_and_admin_operations_are_blocked(method, path):
         allowed(method, path, {"rangeID": "TTL-1"})
 
 
+@pytest.mark.parametrize(
+    "path",
+    ["/template/debian-12-x64-server-template", "/blueprints/bp1", "/sources/src1"],
+)
+def test_deleting_shared_objects_is_blocked(path):
+    with pytest.raises(PolicyError, match="not allowed"):
+        allowed("DELETE", path)
+
+
 def test_unknown_operation_is_blocked():
     with pytest.raises(PolicyError, match="not allowed"):
         allowed("GET", "/something/new")

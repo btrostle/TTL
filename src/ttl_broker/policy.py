@@ -3,9 +3,10 @@
 Everything not listed here is blocked. Left out on purpose: operations that
 return or set Ludus or Proxmox credentials (user credentials, API key,
 WireGuard config, VM console tickets, user creation), Ludus administration
-(users, groups, quotas, range assignment, blueprint sharing), and Proxmox host
+(users, groups, quotas, range assignment, blueprint sharing), Proxmox host
 changes (SDN and SQLite migration, anti-sandbox and KMS installs,
-diagnostics).
+diagnostics), and deleting templates, blueprints, and sources, which are
+shared beyond one range (agents report what can go; the owner deletes it).
 """
 
 import re
@@ -69,7 +70,6 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     # Templates
     ("GET", "/templates", None),
     ("POST", "/templates", None),
-    ("DELETE", "/template/{name}", None),
     ("POST", "/templates/abort", None),
     ("GET", "/templates/logs", None),
     ("GET", "/templates/status", None),
@@ -81,7 +81,6 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     ("POST", "/blueprints/import", None),
     ("POST", "/blueprints/from-range", "body"),
     ("GET", "/blueprints/{blueprintID}", None),
-    ("DELETE", "/blueprints/{blueprintID}", None),
     ("POST", "/blueprints/{blueprintID}/copy", None),
     ("POST", "/blueprints/{blueprintID}/apply", "body"),
     ("GET", "/blueprints/{blueprintID}/config", None),
@@ -93,7 +92,6 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     ("POST", "/sources", None),
     ("GET", "/sources/{sourceID}", None),
     ("PATCH", "/sources/{sourceID}", None),
-    ("DELETE", "/sources/{sourceID}", None),
     ("GET", "/sources/{sourceID}/catalog", None),
     ("POST", "/sources/{sourceID}/install", None),
     ("POST", "/sources/{sourceID}/sync", None),
