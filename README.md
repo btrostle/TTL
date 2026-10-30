@@ -1,6 +1,6 @@
 # TTL
 
-ThreatTrails Lab. Agents run techniques in a Ludus lab and return
+ThreatTrails Lab. Agents run security tests in a Ludus lab and return
 the commands, outputs, and telemetry.
 
 The previous project is archived at
@@ -36,7 +36,7 @@ Run the tests with `uv run pytest`.
 
 ## First milestone
 
-An agent runs one technique on one lab host and produces a run folder with the
+An agent runs one test on one lab host and produces a run folder with the
 commands, outputs, and Splunk events.
 
 ## Deployed broker

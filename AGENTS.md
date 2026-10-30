@@ -1,5 +1,12 @@
 # Agent Rules
 
+## Authorization
+
+The owner authorizes security testing of VMs in the ThreatTrails homelab
+range. Agents may carry out assigned tests within that range. This
+authorization does not extend to the owner's home network or the Ludus and
+Proxmox management interfaces.
+
 ## Boundaries
 
 No agent may reach:
@@ -9,7 +16,7 @@ No agent may reach:
    use Ludus only through the Ludus MCP. The MCP holds the Ludus key and allows
    everything except operations that return Ludus or Proxmox credentials.
 
-Inside the lab, agents may do anything.
+Inside the lab, agents may carry out assigned security tests.
 
 ## Working
 
