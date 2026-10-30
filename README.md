@@ -39,13 +39,32 @@ Run the tests with `uv run pytest`.
 An agent runs one test on one lab host and produces a run folder with the
 commands, outputs, and Splunk events.
 
-## Deployed broker
+## Deploy the broker with Docker
 
-The broker runs on `threattrails-dev.home:8765` as the systemd service
-`ttl-broker`, installed with `sudo sh deploy/install.sh` from a copy of this
-repo. It reads the Ludus key through systemd `LoadCredential` from
-`/etc/threattrails/secrets/ludus_api_key` and checks the Ludus certificate
-(Proxmox's, issued to `ludus`) against `/opt/ttl-broker/ludus.pem`. Its settings and bearer token are in
+On the broker host (`threattrails-dev.home`), from a clone of this repo. The
+host needs Docker and a route to Ludus (its WireGuard tunnel); the container
+uses the host's routing.
+
+```sh
+mkdir -p secrets
+# The Ludus key, readable only by the container's user (uid 10001).
+sudo install -m 400 -o 10001 /path/to/ludus_api_key secrets/ludus_api_key
+# Pin the certificate Ludus presents now (Proxmox's, issued to "ludus").
+echo | openssl s_client -connect 198.51.100.1:8080 2>/dev/null | openssl x509 > secrets/ludus.pem
+cp broker.env.example broker.env   # set LUDUS_URL, ranges, BROKER_TOKEN
+docker compose up -d --build
+```
+
+Update with `git pull && docker compose up -d --build`. Logs:
+`docker compose logs -f`. The container runs read-only, as a non-root user,
+with no capabilities.
+
+### Without Docker
+
+`sudo sh deploy/install.sh` installs the systemd service `ttl-broker`. It
+reads the Ludus key through systemd `LoadCredential` from
+`/etc/threattrails/secrets/ludus_api_key`, pins the certificate to
+`/opt/ttl-broker/ludus.pem`, and keeps its settings and bearer token in
 `/etc/ttl-broker/env` (root only): `sudo sed -n 's/^BROKER_TOKEN=//p'
 /etc/ttl-broker/env`.
 

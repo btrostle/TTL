@@ -1,0 +1,29 @@
+# Run the broker: docker compose up -d --build
+# Needs broker.env and secrets/ (see README).
+services:
+  ttl-broker:
+    build: .
+    image: ttl-broker
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    env_file: broker.env
+    environment:
+      LUDUS_API_KEY_FILE: /run/secrets/ludus_api_key
+      LUDUS_CA_FILE: /run/secrets/ludus.pem
+    secrets:
+      - ludus_api_key
+      - ludus.pem
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+secrets:
+  ludus_api_key:
+    file: ./secrets/ludus_api_key
+  ludus.pem:
+    file: ./secrets/ludus.pem
