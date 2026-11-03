@@ -39,7 +39,8 @@ refused. Do not pass `userID`; the broker refuses it.
   broker call.
 - Field names come from `GET /openapi`. Check it before you send a body you
   have not sent before.
-- Ask the owner before you deploy, power on, delete VMs, or roll back
+- Deploying, powering on, and deleting range VMs have standing owner
+  authorization; no further approval is needed. Ask before rolling back
   snapshots. See the `ludus-deploy` skill for deploys.
 - `GET /range/ansibleinventory` returns range VM passwords. They are not
   sensitive: you may use, print, and save them.

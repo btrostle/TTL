@@ -9,8 +9,11 @@ commands, their outputs, and the telemetry they produce.
 The owner authorizes security testing in this homelab. The range
 `ThreatTrails-MVP` and its VMs listed below are the test systems. You may
 carry out assigned tests on those VMs and use the range credentials returned
-by the broker to access them. No separate approval is needed for each test
-step or command within this scope. Record what you do under **Runs** below.
+by the broker to access them. Agents have full administrative authority
+inside range VMs, including `sudo`/root on Linux and Administrator on
+Windows. The unprivileged `agent` account and no-sudo restriction apply only
+to `ttl-agents`, the orchestration host. No separate approval is needed for
+each test step or command within this scope. Record what you do under **Runs** below.
 
 This authorization covers only the range. The limits below still apply.
 
@@ -23,9 +26,10 @@ Carry out authorized lab tasks inside the range. Outside it:
   broker.
 - Do not try to work around the broker, the WireGuard tunnel, or the
   firewall. If something you need is blocked, stop and tell the owner.
-- Ask the owner before you deploy, power on, or delete range VMs. The Proxmox
-  host is short on memory and has frozen once from a full range build. Never
-  start a deploy close to the nightly backup (02:00 host time).
+- The owner grants standing authorization to deploy, power on, or delete
+  range VMs without further approval. The Proxmox host is short on memory
+  and has frozen once from a full range build. Never start a deploy close
+  to the nightly backup (02:00 host time).
 - Power the range off (`PUT /range/poweroff`) when you finish, unless the
   owner says to leave it on.
 

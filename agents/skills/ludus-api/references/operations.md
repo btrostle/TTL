@@ -34,7 +34,7 @@ from the Ludus API v2.1 OpenAPI spec; check `GET /openapi` if a call fails.
 | `ludus range errors` | No API call. Read `GET /range/logs` and search for `fatal:` and `ERROR!`, skipping lines followed by `...ignoring` |
 | `ludus range taskoutput "<task>"` | No API call. Search `GET /range/logs` for the task name |
 | `ludus range abort` | `POST /range/abort`, R |
-| `ludus range rm` | `DELETE /range/ThreatTrails-MVP/vms`. Ask the owner first |
+| `ludus range rm` | `DELETE /range/ThreatTrails-MVP/vms`. Standing owner authorization |
 | `ludus range inventory` | `GET /range/ansibleinventory`, R. Contains passwords |
 | `ludus range etc-hosts` | `GET /range/etchosts`, R |
 | `ludus range rdp` | `GET /range/rdpconfigs`, R (zip, returned base64) |
@@ -48,7 +48,7 @@ itself, not only its VMs.
 
 | CLI | Broker call |
 |---|---|
-| `ludus power on` | `PUT /range/poweron`, R, `body`: `{"machines": ["all"]}` or VM names. Ask the owner first |
+| `ludus power on` | `PUT /range/poweron`, R, `body`: `{"machines": ["all"]}` or VM names. Standing owner authorization |
 | `ludus power off` | `PUT /range/poweroff`, R, `body`: `{"machines": ["all"]}` or VM names |
 
 Auto-shutdown (`GET`/`PUT /range/auto-shutdown`) is allowed by the broker but

@@ -24,8 +24,8 @@ and the doc link, and do not try to do it another way.
    Roles: `GET /ansible`.
 6. Check the VM itself from `kali` or `ttl-agents`: ping, SSH (Linux) or
    WinRM HTTPS 5986 (Windows).
-7. Fix what you can through the broker or on the range VMs. Ask the owner
-   before a redeploy (see `ludus-deploy`).
+7. Fix what you can through the broker or on the range VMs. Redeploys have
+   standing owner authorization (see `ludus-deploy`).
 8. Confirm the fix: the range reaches `SUCCESS` and the VM answers.
 
 ## Common patterns

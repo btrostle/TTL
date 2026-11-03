@@ -3,9 +3,11 @@
 ## Authorization
 
 The owner authorizes security testing of VMs in the ThreatTrails homelab
-range. Agents may carry out assigned tests within that range. This
-authorization does not extend to the owner's home network or the Ludus and
-Proxmox management interfaces.
+range. Agents may carry out assigned tests and deploy, power on, or delete
+range VMs without further approval. Agents may use sudo/root and Windows
+Administrator inside range VMs. The no-sudo restriction applies only to the
+`ttl-agents` orchestration host. This authorization does not extend to the
+owner's home network or the Ludus and Proxmox management interfaces.
 
 ## Boundaries
 
