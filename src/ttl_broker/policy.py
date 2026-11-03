@@ -5,7 +5,10 @@ return or set Ludus or Proxmox credentials (user credentials, API key,
 WireGuard config, VM console tickets, user creation), Ludus administration
 (users, groups, quotas, range assignment, blueprint sharing), and Proxmox host
 changes (SDN and SQLite migration, anti-sandbox and KMS installs,
-diagnostics).
+diagnostics). Also left out, because they change things shared beyond one
+range: deleting templates, blueprints, and sources, and installing, removing,
+or moving Ansible roles and collections (including through source and
+blueprint installs). Agents report what should change; the owner does it.
 """
 
 import re
@@ -23,11 +26,7 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     # Ansible
     ("GET", "/ansible", None),
     ("GET", "/ansible/subscription-roles", None),
-    ("POST", "/ansible/subscription-roles", None),
     ("POST", "/ansible/role/vars", None),
-    ("POST", "/ansible/collection", None),
-    ("PATCH", "/ansible/role/scope", None),
-    ("POST", "/ansible/role", None),
     # Ranges
     ("POST", "/ranges/create", "body"),
     ("GET", "/ranges/accessible", None),
@@ -69,7 +68,6 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     # Templates
     ("GET", "/templates", None),
     ("POST", "/templates", None),
-    ("DELETE", "/template/{name}", None),
     ("POST", "/templates/abort", None),
     ("GET", "/templates/logs", None),
     ("GET", "/templates/status", None),
@@ -81,21 +79,17 @@ OPERATIONS: list[tuple[str, str, RangeIn]] = [
     ("POST", "/blueprints/import", None),
     ("POST", "/blueprints/from-range", "body"),
     ("GET", "/blueprints/{blueprintID}", None),
-    ("DELETE", "/blueprints/{blueprintID}", None),
     ("POST", "/blueprints/{blueprintID}/copy", None),
     ("POST", "/blueprints/{blueprintID}/apply", "body"),
     ("GET", "/blueprints/{blueprintID}/config", None),
     ("PUT", "/blueprints/{blueprintID}/config", None),
-    ("POST", "/blueprints/{blueprintID}/install", None),
     ("GET", "/blueprints/{blueprintID}/export", None),
     # Sources
     ("GET", "/sources", None),
     ("POST", "/sources", None),
     ("GET", "/sources/{sourceID}", None),
     ("PATCH", "/sources/{sourceID}", None),
-    ("DELETE", "/sources/{sourceID}", None),
     ("GET", "/sources/{sourceID}/catalog", None),
-    ("POST", "/sources/{sourceID}/install", None),
     ("POST", "/sources/{sourceID}/sync", None),
     ("GET", "/sources/{sourceID}/blueprints", None),
     ("GET", "/sources/{sourceID}/templates", None),

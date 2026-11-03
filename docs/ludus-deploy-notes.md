@@ -59,6 +59,12 @@ Upload the config with `PUT /range/config?rangeID=...`, passing the YAML as
 nothing still leaves the range in `ERROR`. Use a VM name such as
 `ThreatTrails-MVP-ar-linux`.
 
+`limit` does not stagger VM creation. On 2026-10-30, a deploy limited to the
+router after `DELETE /range/{rangeID}/vms` still cloned and started all five
+VMs, because Ludus creates VMs in plays on `localhost`. Only the per-VM
+configuration was limited. To space out power-on, use `PUT /range/poweron`
+with one VM name at a time on VMs that already exist.
+
 ### `ERROR` sticks until a deploy succeeds
 
 The range stays in `ERROR` after any failed deploy, even a limited one that
@@ -101,8 +107,8 @@ this at all: see the result below.
 
 `GET /range/ansibleinventory` returns the range VMs' login and sudo passwords
 (`localuser` on Linux). These are lab credentials, not Ludus management
-credentials, so the broker allows them. Treat them as secrets anyway: do not
-print or log them.
+credentials, so the broker allows them. The owner has approved agents to
+access all range passwords; they are not sensitive.
 
 ### Calling the broker without an MCP client
 
@@ -172,3 +178,25 @@ returns 404 "implemented in a plugin that is not loaded" (likely Ludus Pro).
 - The range config now lives in `deploy/ranges/ThreatTrails-MVP.yml`, sized to
   25 GB (Splunk 8, Windows 6, Linux 2, Kali 8, router 1). Revisit after the
   mini PC migration.
+
+## osquery events stamped 4 hours ahead
+
+On 2026-10-30, `osquery:results` events from `ar-linux` were indexed 4 hours
+in the future (the VM's EDT offset). The events carry `calendarTime` as UTC
+text and `unixTime` as epoch seconds. Splunk had no timestamp settings for
+the sourcetype, read `calendarTime`, and ignored its `UTC` suffix.
+
+Fix, on `ar-splunk` in
+`/opt/splunk/etc/apps/ttl_osquery_time/local/props.conf`, then a Splunk
+restart:
+
+```ini
+[osquery:results]
+TIME_PREFIX = "unixTime":
+TIME_FORMAT = %s
+MAX_TIMESTAMP_LOOKAHEAD = 12
+```
+
+It lives only on the VM. Rebuilding `ar-splunk` loses it until it is added to
+the `p4t12ick.ludus_ar_splunk` role or reapplied by hand. Events indexed
+before the fix keep their wrong times.

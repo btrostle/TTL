@@ -36,6 +36,36 @@ def test_credential_and_admin_operations_are_blocked(method, path):
         allowed(method, path, {"rangeID": "TTL-1"})
 
 
+@pytest.mark.parametrize(
+    "path",
+    ["/template/debian-12-x64-server-template", "/blueprints/bp1", "/sources/src1"],
+)
+def test_deleting_shared_objects_is_blocked(path):
+    with pytest.raises(PolicyError, match="not allowed"):
+        allowed("DELETE", path)
+
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("POST", "/ansible/role"),
+        ("POST", "/ansible/collection"),
+        ("PATCH", "/ansible/role/scope"),
+        ("POST", "/ansible/subscription-roles"),
+        ("POST", "/sources/src1/install"),
+        ("POST", "/blueprints/bp1/install"),
+    ],
+)
+def test_changing_shared_roles_is_blocked(method, path):
+    with pytest.raises(PolicyError, match="not allowed"):
+        allowed(method, path)
+
+
+def test_reading_roles_is_allowed():
+    allowed("GET", "/ansible")
+    allowed("POST", "/ansible/role/vars")
+
+
 def test_unknown_operation_is_blocked():
     with pytest.raises(PolicyError, match="not allowed"):
         allowed("GET", "/something/new")
