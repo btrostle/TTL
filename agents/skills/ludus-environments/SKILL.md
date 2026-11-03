@@ -11,8 +11,9 @@ something you can deploy on your own:
 
 - The broker allows only one range, `ThreatTrails-MVP`. Using an environment
   means changing that range's config (the `ludus-range-config` skill).
-- The Proxmox host is short on memory. The range budget is about 25 GB of RAM
-  in total. Most AD environments need more (GOAD needs about 40 GB).
+- The Proxmox host is short on memory. The range budget is a 45 GB RAM soft
+  cap, with one range up at a time. Large AD environments may not fit
+  alongside the existing VMs (GOAD alone needs about 40 GB).
 - Roles and collections must be installed globally by the owner. The broker
   blocks installs, including source and blueprint installs.
 - Templates must already be built (`GET /templates`).

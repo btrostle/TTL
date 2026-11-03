@@ -12,8 +12,9 @@ broker as the `ludus-api` skill describes.
 ## Rules for this lab
 
 1. **The owner approves every config change.** Show the diff and wait. The
-   Proxmox host is short on memory; the range budget is about 25 GB of RAM in
-   total. Give the RAM total of the new config with the diff.
+   Proxmox host is short on memory; the range budget is a 45 GB RAM soft
+   cap, with one range up at a time. Give the RAM total of the new config
+   with the diff.
 2. **Do not change VM sizes, the router, or remove VMs** unless the owner asks.
 3. **Keep the Debian 12 `router:` section.** Without it Ludus builds the
    Debian 11 router, which no longer builds.
