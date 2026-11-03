@@ -12,9 +12,9 @@ set -eu
 [ "$(id -un)" = agent ] || { echo "Run this as the user agent on the agents box." >&2; exit 1; }
 
 mkdir -p ~/.agents/skills ~/.codex ~/.pi/agent ~/.claude ~/ttl
-cp agents/AGENTS.md ~/.agents/AGENTS.md
+cp lab-agents/AGENTS.md ~/.agents/AGENTS.md
 # Replace only the repo's skills; Claude Code keeps synced skills here too.
-for s in agents/skills/*; do
+for s in lab-agents/skills/*; do
     rm -rf ~/.agents/skills/"$(basename "$s")"
     cp -r "$s" ~/.agents/skills/
 done
