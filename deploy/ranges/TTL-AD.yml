@@ -1,0 +1,114 @@
+# yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
+#
+# TTL-AD: full GOAD (2 forests, 3 domains). About 37 GB RAM.
+# The five GOAD VMs match GOAD's Ludus provider config
+# (ad/GOAD/providers/ludus/config.yml); keep their VLAN and IPs, which
+# GOAD's inventory expects. Deploy through the broker, then run GOAD's
+# Ansible playbooks from kali. Do not use goad.sh -p ludus: it calls the
+# Ludus API with its own key. See docs/ranges.md.
+
+router:
+  vm_name: "{{ range_id }}-router-debian12-x64"
+  hostname: "{{ range_id }}-router"
+  template: debian-12-x64-server-template
+  ram_gb: 1
+  cpus: 2
+
+ludus:
+  - vm_name: "{{ range_id }}-elastic"
+    hostname: "{{ range_id }}-elastic"
+    template: debian-12-x64-server-template
+    vlan: 20
+    ip_last_octet: 2
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    roles:
+      - badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-GOAD-DC01" # kingslanding, sevenkingdoms.local
+    hostname: "{{ range_id }}-DC01"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 10
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-GOAD-DC02" # winterfell, north.sevenkingdoms.local
+    hostname: "{{ range_id }}-DC02"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 11
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-GOAD-DC03" # meereen, essos.local
+    hostname: "{{ range_id }}-DC03"
+    template: win2016-server-x64-template
+    vlan: 10
+    ip_last_octet: 12
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-GOAD-SRV02" # castelblack, north
+    hostname: "{{ range_id }}-SRV02"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 22
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-GOAD-SRV03" # braavos, essos
+    hostname: "{{ range_id }}-SRV03"
+    template: win2019-server-x64-template
+    vlan: 10
+    ip_last_octet: 23
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-kali"
+    hostname: "{{ range_id }}-kali"
+    template: kali-x64-desktop-template
+    vlan: 99
+    ip_last_octet: 1
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    testing:
+      snapshot: false
+      block_internet: false

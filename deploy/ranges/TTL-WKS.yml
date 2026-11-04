@@ -1,0 +1,106 @@
+# yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
+#
+# TTL-WKS: basic AD network for workstation attacks. About 35 GB RAM.
+# One DC, two Windows 11 workstations (for lateral movement), one Ubuntu
+# server. Every endpoint runs Elastic Defend. Kali sits on its own VLAN.
+
+router:
+  vm_name: "{{ range_id }}-router-debian12-x64"
+  hostname: "{{ range_id }}-router"
+  template: debian-12-x64-server-template
+  ram_gb: 1
+  cpus: 2
+
+ludus:
+  - vm_name: "{{ range_id }}-elastic"
+    hostname: "{{ range_id }}-elastic"
+    template: debian-12-x64-server-template
+    vlan: 20
+    ip_last_octet: 2
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    roles:
+      - badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-DC01"
+    hostname: "{{ range_id }}-DC01"
+    template: win2022-server-x64-template
+    vlan: 10
+    ip_last_octet: 11
+    ram_gb: 4
+    cpus: 2
+    windows:
+      sysprep: true
+      gpos:
+        - disable_defender # Defend in detect mode records; Defender would block
+    domain:
+      fqdn: ttl.lab
+      role: primary-dc
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-WS01"
+    hostname: "{{ range_id }}-WS01"
+    template: win11-22h2-x64-enterprise-template
+    vlan: 10
+    ip_last_octet: 21
+    ram_gb: 6
+    cpus: 4
+    windows:
+      sysprep: true
+    domain:
+      fqdn: ttl.lab
+      role: member
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-WS02"
+    hostname: "{{ range_id }}-WS02"
+    template: win11-22h2-x64-enterprise-template
+    vlan: 10
+    ip_last_octet: 22
+    ram_gb: 6
+    cpus: 4
+    windows:
+      sysprep: true
+    domain:
+      fqdn: ttl.lab
+      role: member
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-linux"
+    hostname: "{{ range_id }}-linux"
+    template: ubuntu-22.04-x64-server-template
+    vlan: 10
+    ip_last_octet: 31
+    ram_gb: 2
+    cpus: 2
+    linux: true
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+
+  - vm_name: "{{ range_id }}-kali"
+    hostname: "{{ range_id }}-kali"
+    template: kali-x64-desktop-template
+    vlan: 99
+    ip_last_octet: 1
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    testing:
+      snapshot: false
+      block_internet: false

@@ -1,0 +1,99 @@
+# yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
+#
+# TTL-MAL: malware and app analysis. About 35 GB RAM.
+# VLAN 10 is the detonation network (victim, flare, remnux).
+# VLAN 20 holds the Elastic stack. Detonation hosts may reach only its
+# agent ports. After deploy, the victim and flare use remnux as their
+# gateway and DNS. See docs/ranges.md for the setup steps.
+# Detonate only in testing mode: internet blocked, victim and flare
+# snapshotted and reverted when testing ends.
+
+router:
+  vm_name: "{{ range_id }}-router-debian12-x64"
+  hostname: "{{ range_id }}-router"
+  template: debian-12-x64-server-template
+  ram_gb: 1
+  cpus: 2
+
+ludus:
+  - vm_name: "{{ range_id }}-elastic"
+    hostname: "{{ range_id }}-elastic"
+    template: debian-12-x64-server-template
+    vlan: 20
+    ip_last_octet: 2
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    roles:
+      - badsectorlabs.ludus_elastic_container
+    testing:
+      snapshot: false
+      block_internet: true
+
+  - vm_name: "{{ range_id }}-remnux"
+    hostname: "{{ range_id }}-remnux"
+    template: ubuntu-24.04-x64-server-template
+    vlan: 10
+    ip_last_octet: 10
+    ram_gb: 4
+    cpus: 2
+    linux: true
+    testing:
+      snapshot: false # keep PCAPs and INetSim logs across reverts
+      block_internet: true
+
+  - vm_name: "{{ range_id }}-victim"
+    hostname: "{{ range_id }}-victim"
+    template: win11-22h2-x64-enterprise-template
+    vlan: 10
+    ip_last_octet: 21
+    ram_gb: 6
+    cpus: 4
+    windows:
+      sysprep: false
+    roles:
+      - name: badsectorlabs.ludus_elastic_agent
+        depends_on:
+          - vm_name: "{{ range_id }}-elastic"
+            role: badsectorlabs.ludus_elastic_container
+    testing:
+      snapshot: true
+      block_internet: true
+
+  - vm_name: "{{ range_id }}-flare"
+    hostname: "{{ range_id }}-flare"
+    template: flare-vm-template
+    vlan: 10
+    ip_last_octet: 22
+    ram_gb: 16
+    cpus: 4
+    windows:
+      sysprep: false
+    testing:
+      snapshot: true
+      block_internet: true
+
+network:
+  inter_vlan_default: REJECT
+  rules:
+    - name: Detonation net to Elastic Kibana
+      vlan_src: 10
+      vlan_dst: 20
+      ip_last_octet_dst: 2
+      protocol: tcp
+      ports: 5601
+      action: ACCEPT
+    - name: Detonation net to Elastic Fleet
+      vlan_src: 10
+      vlan_dst: 20
+      ip_last_octet_dst: 2
+      protocol: tcp
+      ports: 8220
+      action: ACCEPT
+    - name: Detonation net to Elastic Elasticsearch
+      vlan_src: 10
+      vlan_dst: 20
+      ip_last_octet_dst: 2
+      protocol: tcp
+      ports: 9200
+      action: ACCEPT
