@@ -27,7 +27,7 @@
 **Roles/Collections:**
 - External GOAD provisioning (ansible playbooks run from local machine)
 
-**Resources:** ~40GB RAM, 10+ CPUs recommended
+**Resources:** 5 VMs at 4 GB each (20 GB) in the Ludus provider config, 10 CPUs
 
 **Setup:**
 1. Clone `https://github.com/Orange-Cyberdefense/GOAD` and enter the repo.
