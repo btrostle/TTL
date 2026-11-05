@@ -13,3 +13,9 @@
     is root-equivalent and would expose the Ludus key).
   - Compose secrets keep host permissions: the key file must be readable by
     uid 10001.
+- Benign background activity in ranges:
+  - GHOSTS (CMU SEI): simulated-user agents on the workstation and GOAD
+    ranges so Elastic collects real benign telemetry. Check the server's RAM
+    against the 45 GB range cap.
+  - BadBlood: fill AD with realistic users, groups, OUs, and ACLs on the AD
+    ranges.
