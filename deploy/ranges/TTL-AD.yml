@@ -112,3 +112,11 @@ ludus:
     testing:
       snapshot: false
       block_internet: false
+
+network:
+  # Layer 1 of 2: the range router never forwards to private networks
+  # outside the range. Layer 2 is a firewall on the Ludus host that agents
+  # cannot change. Keep this block; see docs/ranges.md.
+  always_blocked_networks:
+    - 192.168.0.0/16
+    - 172.16.0.0/12

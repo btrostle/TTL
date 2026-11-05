@@ -11,6 +11,27 @@ SIEM rules) rather than Splunk.
 | `TTL-WKS` | `deploy/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 35 GB |
 | `TTL-AD` | `deploy/ranges/TTL-AD.yml` | Full GOAD | 37 GB |
 
+## Home network isolation (all ranges)
+
+Two layers keep range traffic off the owner's home network. Agents have
+root on range routers and can upload range configs, so the range router
+alone is not enough.
+
+1. **Range router.** Every range config sets
+   `network.always_blocked_networks` to `192.168.0.0/16` and
+   `172.16.0.0/12`. Ranges use `10.<n>.0.0/16`, so nothing in a range needs
+   those networks. Agents must keep this block.
+2. **Ludus host.** Range routers reach the internet through the host's NAT
+   bridge (`vmbr1000`, 192.0.2.0/24). An nftables firewall on the host drops
+   traffic from that bridge to private networks, and allows to the host
+   itself only DHCP and DNS. Agents cannot reach the host, so this layer
+   holds even if a range router is compromised. The owner keeps the rules;
+   they are not in this repo.
+
+After layer 2 is in place, verify it from a range router with its firewall
+flushed: home addresses, the Proxmox UI and the Ludus API must be
+unreachable.
+
 ## Owner setup (all ranges)
 
 - Add the range IDs to `LUDUS_ALLOWED_RANGES` on the broker.

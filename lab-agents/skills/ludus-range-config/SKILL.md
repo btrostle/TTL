@@ -22,6 +22,11 @@ broker as the `ludus-api` skill describes.
    before you add a role. The broker blocks role installs; report a missing
    role to the owner.
 5. **Templates must exist.** Check `GET /templates` before you use one.
+6. **Keep `network.always_blocked_networks`** with `192.168.0.0/16` and
+   `172.16.0.0/12` in every range config. It is layer 1 of the home-network
+   block (see AGENTS.md). Never remove or narrow it, and never add
+   `router.iptables_commands` or rules that reach private networks outside
+   `10.0.0.0/8`. Before uploading, check that the block is still there.
 
 ## Ludus config rules
 

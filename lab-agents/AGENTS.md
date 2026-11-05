@@ -26,6 +26,15 @@ Carry out authorized lab tasks inside the range. Outside it:
   broker.
 - Do not try to work around the broker, the WireGuard tunnel, or the
   firewall. If something you need is blocked, stop and tell the owner.
+- Two layers keep ranges off the home network. Layer 1: every range config
+  sets `network.always_blocked_networks` (`192.168.0.0/16`,
+  `172.16.0.0/12`), which the range router enforces. Layer 2: a firewall on
+  the Ludus host, which you cannot see or change. You have root on range
+  routers and can upload configs, so layer 1 depends on you: never remove
+  or narrow `always_blocked_networks`, never change a range router's
+  firewall by hand, and never use `router.iptables_commands` or
+  `POST /testing/allow` for private addresses. If a range VM can reach a
+  private address outside `10.0.0.0/8`, stop and tell the owner.
 - The owner grants standing authorization to deploy, power on, or delete
   range VMs without further approval. The Proxmox host is short on memory
   and has frozen once from a full range build. Never start a deploy close
