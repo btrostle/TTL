@@ -6,7 +6,7 @@ description: Read, edit, and validate the ThreatTrails-MVP Ludus range config YA
 # Ludus range config
 
 The config for `ThreatTrails-MVP` is kept in the TTL repo at
-`deploy/ranges/ThreatTrails-MVP.yml`. The live copy is on Ludus. Call the
+`deploy/ludus/ranges/ThreatTrails-MVP.yml`. The live copy is on Ludus. Call the
 broker as the `ludus-api` skill describes.
 
 ## Rules for this lab
@@ -54,7 +54,7 @@ broker as the `ludus-api` skill describes.
 5. Upload: `PUT /range/config` with `rangeID`, the YAML in `file_text`, and
    `body` `{"force": "false"}`. Read it back with `GET /range/config` and
    compare.
-6. Update `deploy/ranges/ThreatTrails-MVP.yml` to match.
+6. Update `deploy/ludus/ranges/ThreatTrails-MVP.yml` to match.
 7. A config change takes effect on the next deploy. Use the `ludus-deploy`
    skill, which needs the owner's go-ahead.
 

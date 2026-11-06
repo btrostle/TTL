@@ -1,7 +1,7 @@
 #!/bin/sh
 # Install the agents' shared instructions and skills. Run as the user
 # "agent" on the agents box, from the unpacked TTL source directory:
-#   sh deploy/agent-config.sh
+#   sh deploy/agents/agent-config.sh
 #
 # ~/.agents holds the only copy. Each harness is pointed at it:
 #   Codex:       ~/.codex/AGENTS.md -> ~/.agents/AGENTS.md; reads ~/.agents/skills itself
@@ -12,13 +12,13 @@ set -eu
 [ "$(id -un)" = agent ] || { echo "Run this as the user agent on the agents box." >&2; exit 1; }
 
 mkdir -p ~/.agents/skills ~/.codex ~/.pi/agent ~/.claude ~/ttl
-cp lab-agents/AGENTS.md ~/.agents/AGENTS.md
+cp deploy/agents/AGENTS.md ~/.agents/AGENTS.md
 # Replace only the repo's skills; Claude Code keeps synced skills here too.
-for s in lab-agents/skills/*; do
+for s in deploy/agents/skills/*; do
     rm -rf ~/.agents/skills/"$(basename "$s")"
     cp -r "$s" ~/.agents/skills/
 done
-cp deploy/mcpcall.py ~/ttl/mcpcall.py
+cp deploy/agents/mcpcall.py ~/ttl/mcpcall.py
 git rev-parse HEAD > ~/.agents/REVISION 2>/dev/null || cp REVISION ~/.agents/REVISION
 
 ln -sfn ~/.agents/AGENTS.md ~/.codex/AGENTS.md

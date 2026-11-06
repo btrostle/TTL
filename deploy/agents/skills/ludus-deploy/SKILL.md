@@ -62,5 +62,5 @@ cause.
 
 ## Config
 
-The range config lives in the TTL repo (`deploy/ranges/ThreatTrails-MVP.yml`).
+The range config lives in the TTL repo (`deploy/ludus/ranges/ThreatTrails-MVP.yml`).
 Do not change VM sizes or the router without the owner.

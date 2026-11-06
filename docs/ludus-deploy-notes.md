@@ -112,7 +112,7 @@ access all range passwords; they are not sensitive.
 
 ### Calling the broker without an MCP client
 
-`deploy/mcpcall.py` is a stdlib-only MCP client used for this work (copy it to
+`deploy/agents/mcpcall.py` is a stdlib-only MCP client used for this work (copy it to
 `ttl-agents`). It reads the token from `~/.config/ttl/broker.env` and calls
 `ludus_request` with a JSON argument. It is the start of the `ludus` CLI pi
 needs, since pi has no MCP support.
@@ -175,7 +175,7 @@ returns 404 "implemented in a plugin that is not loaded" (likely Ludus Pro).
 - Revoke the UniFi API key (still valid at last check), then delete the local
   copies in the session scratchpad.
 - Dev VLAN: other Dev hosts can reach the router admin UI over IPv6 link-local.
-- The range config now lives in `deploy/ranges/ThreatTrails-MVP.yml`, sized to
+- The range config now lives in `deploy/ludus/ranges/ThreatTrails-MVP.yml`, sized to
   25 GB (Splunk 8, Windows 6, Linux 2, Kali 8, router 1). Revisit after the
   mini PC migration.
 

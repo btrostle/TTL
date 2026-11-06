@@ -51,7 +51,7 @@ mkdir -p secrets
 sudo install -m 400 -o 10001 /path/to/ludus_api_key secrets/ludus_api_key
 # Pin the certificate Ludus presents now (Proxmox's, issued to "ludus").
 echo | openssl s_client -connect 198.51.100.1:8080 2>/dev/null | openssl x509 > secrets/ludus.pem
-cp broker.env.example broker.env   # set LUDUS_URL, ranges, BROKER_TOKEN
+cp deploy/broker/broker.env.example broker.env   # set LUDUS_URL, ranges, BROKER_TOKEN
 docker compose up -d --build
 ```
 
@@ -61,7 +61,7 @@ with no capabilities.
 
 ### Without Docker
 
-`sudo sh deploy/install.sh` installs the systemd service `ttl-broker`. It
+`sudo sh deploy/broker/install.sh` installs the systemd service `ttl-broker`. It
 reads the Ludus key through systemd `LoadCredential` from
 `/etc/threattrails/secrets/ludus_api_key`, pins the certificate to
 `/opt/ttl-broker/ludus.pem`, and keeps its settings and bearer token in
@@ -71,7 +71,7 @@ reads the Ludus key through systemd `LoadCredential` from
 ## Agents box
 
 `ttl-agents` (Ubuntu 24.04, Dev VLAN) runs the agent harnesses (herdr, Claude
-Code, Codex) as the unprivileged user `agent`. `deploy/agents-box.sh` sets it
+Code, Codex) as the unprivileged user `agent`. `deploy/agents/agents-box.sh` sets it
 up from a fresh VM: a root-only WireGuard tunnel for the agents' own Ludus
 user, routing only the range subnets; no sudo for `agent`; and an nftables
 backstop that rejects `agent` traffic to the Ludus host. Agents reach Ludus

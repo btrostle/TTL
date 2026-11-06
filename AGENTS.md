@@ -1,8 +1,8 @@
 # Agent Rules
 
 These rules are for coding agents working on this repository. Lab operations
-agents get `lab-agents/` instead, installed on `ttl-agents` by
-`deploy/agent-config.sh`.
+agents get `deploy/agents/` instead, installed on `ttl-agents` by
+`deploy/agents/agent-config.sh`.
 
 ## Authorization
 
@@ -32,7 +32,7 @@ Inside the lab, agents may carry out assigned security tests.
 - Never commit or print secrets.
 - Range VM passwords (from `GET /range/ansibleinventory`) are not sensitive.
   Agents are approved to fetch, use, print, and store them. The Splunk
-  admin login is documented in `lab-agents/AGENTS.md`.
+  admin login is documented in `deploy/agents/AGENTS.md`.
 - This repository is public. Do not commit home network details (subnets,
   host IPs, firewall rules, known gaps). Put them in `private/`, which is
   gitignored. Lab notes for the owner are in `private/network-context.md`.

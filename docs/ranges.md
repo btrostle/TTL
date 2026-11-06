@@ -7,9 +7,9 @@ SIEM rules) rather than Splunk.
 
 | Range | Config | Purpose | RAM |
 |---|---|---|---|
-| `TTL-MAL` | `deploy/ranges/TTL-MAL.yml` | Malware and app analysis | 35 GB |
-| `TTL-WKS` | `deploy/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 35 GB |
-| `TTL-AD` | `deploy/ranges/TTL-AD.yml` | Full GOAD | 37 GB |
+| `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware and app analysis | 35 GB |
+| `TTL-WKS` | `deploy/ludus/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 35 GB |
+| `TTL-AD` | `deploy/ludus/ranges/TTL-AD.yml` | Full GOAD | 37 GB |
 
 ## Home network isolation (all ranges)
 
@@ -26,10 +26,10 @@ alone is not enough.
    traffic from that bridge to private networks, and allows to the host
    itself only DHCP and DNS. Agents cannot reach the host, so this layer
    holds even if a range router is compromised. The owner installs it from
-   `deploy/ludus-host-guard/`, which has the rules, install steps and the
+   `deploy/ludus/host-guard/`, which has the rules, install steps and the
    check.
 
-Verify layer 2 from a range router (see `deploy/ludus-host-guard/`): home
+Verify layer 2 from a range router (see `deploy/ludus/host-guard/`): home
 addresses, the Proxmox UI and the Ludus API must be unreachable, and the
 internet reachable. Templates that use Packer's HTTP server must be built
 through `ttl-template-window.sh`.

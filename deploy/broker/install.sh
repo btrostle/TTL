@@ -1,6 +1,6 @@
 #!/bin/sh
 # Install or update ttl-broker on the broker box. Run as root from the
-# unpacked TTL source directory: sudo sh deploy/install.sh
+# unpacked TTL source directory: sudo sh deploy/broker/install.sh
 set -eu
 
 ranges="${LUDUS_ALLOWED_RANGES:-ThreatTrails-MVP}"
@@ -33,7 +33,7 @@ BROKER_TOKEN=$(head -c 32 /dev/urandom | base64 | tr -d '/+=')
 EOF
 fi
 
-cp "$OLDPWD/deploy/ttl-broker.service" /etc/systemd/system/ttl-broker.service
+cp "$OLDPWD/deploy/broker/ttl-broker.service" /etc/systemd/system/ttl-broker.service
 systemctl daemon-reload
 systemctl enable ttl-broker
 systemctl restart ttl-broker

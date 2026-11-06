@@ -2,7 +2,7 @@
 
 - Broker container for people sharing this project (not for our own deploy,
   which stays on systemd). Drafted but never built: `Dockerfile`,
-  `compose.yaml`, `broker.env.example`, `.dockerignore`, and the README's
+  `compose.yaml`, `deploy/broker/broker.env.example`, `.dockerignore`, and the README's
   Docker section. Left to do:
   - Build and run it once on a host that can reach Ludus; check that an agent
     can call `list_operations` through it.
