@@ -1,0 +1,5 @@
+# /etc/ttl-range-guard.local.nft: host-specific settings for the range guard.
+# Not tracked in git. Set uplink to the bridge the Ludus host's default
+# route uses (the -o interface of Ludus's MASQUERADE rule in
+# `iptables-save -t nat`). Traffic from ranges may leave only through it.
+define uplink = "vmbr0"

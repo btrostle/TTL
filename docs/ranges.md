@@ -25,12 +25,14 @@ alone is not enough.
    bridge (`vmbr1000`, 192.0.2.0/24). An nftables firewall on the host drops
    traffic from that bridge to private networks, and allows to the host
    itself only DHCP and DNS. Agents cannot reach the host, so this layer
-   holds even if a range router is compromised. The owner keeps the rules;
-   they are not in this repo.
+   holds even if a range router is compromised. The owner installs it from
+   `deploy/ludus-host-guard/`, which has the rules, install steps and the
+   check.
 
-After layer 2 is in place, verify it from a range router with its firewall
-flushed: home addresses, the Proxmox UI and the Ludus API must be
-unreachable.
+Verify layer 2 from a range router (see `deploy/ludus-host-guard/`): home
+addresses, the Proxmox UI and the Ludus API must be unreachable, and the
+internet reachable. Templates that use Packer's HTTP server must be built
+through `ttl-template-window.sh`.
 
 ## Owner setup (all ranges)
 

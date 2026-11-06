@@ -1,0 +1,16 @@
+[Unit]
+Description=TTL range guard (nftables: keep Ludus ranges off home and host)
+DefaultDependencies=no
+After=local-fs.target
+Before=network-pre.target
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/nft -f /etc/ttl-range-guard.nft
+ExecReload=/usr/sbin/nft -f /etc/ttl-range-guard.nft
+ExecStop=/usr/sbin/nft delete table inet ttl_range_guard
+
+[Install]
+WantedBy=sysinit.target

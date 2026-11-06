@@ -1,0 +1,65 @@
+#!/usr/sbin/nft -f
+# TTL range guard: layer 2 of home-network isolation, on the Ludus host.
+#
+# Range routers' WANs sit on vmbr1000 (192.0.2.101-253). Template builds
+# use 192.0.2.50-100 on the same bridge. Anything arriving on vmbr1000 may:
+#   - reach the internet, routed out $uplink (MASQUERADE already exists);
+#   - reach the host itself only for DHCP, DNS (dnsmasq) and ping.
+# Everything else from vmbr1000 is dropped: home and other private nets,
+# the host's own services (8006, 8080, 22, ...), other ranges, and new
+# connections to WireGuard clients (198.51.100.0/24, e.g. ttl-agents).
+# Replies to connections the host or WireGuard clients open (Ansible,
+# WinRM, SSH into ranges) still pass.
+#
+# Uses its own table, so it does not touch Ludus's iptables (legacy)
+# rules or a future Proxmox firewall. A drop in any base chain wins.
+#
+# Host-specific settings live in /etc/ttl-range-guard.local.nft (see
+# local.nft.example): $uplink is the bridge the host's default route uses,
+# the one Ludus MASQUERADEs 192.0.2.0/24 out of (`iptables-save -t nat`).
+
+include "/etc/ttl-range-guard.local.nft"
+
+table inet ttl_range_guard
+delete table inet ttl_range_guard
+
+table inet ttl_range_guard {
+	set blocked4 {
+		type ipv4_addr
+		flags interval
+		elements = {
+			0.0.0.0/8, 10.0.0.0/8, 100.64.0.0/10, 127.0.0.0/8,
+			169.254.0.0/16, 172.16.0.0/12, 192.0.0.0/24, 192.0.2.0/24,
+			192.168.0.0/16, 198.18.0.0/15, 198.51.100.0/24,
+			203.0.113.0/24, 224.0.0.0/3
+		}
+	}
+
+	chain blocked {
+		limit rate 10/minute log prefix "ttl-range-guard drop: "
+		counter drop
+	}
+
+	chain input {
+		type filter hook input priority filter - 10; policy accept;
+		iifname != "vmbr1000" accept
+		ct state established,related accept
+		udp dport { 53, 67 } accept
+		tcp dport 53 accept
+		icmp type echo-request accept
+		icmpv6 type { nd-neighbor-solicit, nd-neighbor-advert, nd-router-solicit } accept
+		# Template builds (Packer HTTP server on the host): see README.md.
+		# ip saddr 192.0.2.50-192.0.2.100 accept
+		jump blocked
+	}
+
+	chain forward {
+		type filter hook forward priority filter - 10; policy accept;
+		iifname != "vmbr1000" accept
+		ct state established,related accept
+		oifname != $uplink jump blocked
+		meta nfproto ipv6 jump blocked
+		ip daddr @blocked4 jump blocked
+		counter accept
+	}
+}
