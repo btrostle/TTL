@@ -1,12 +1,15 @@
 # yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
 #
-# TTL-MAL: malware and app analysis. About 27 GB RAM.
-# VLAN 10 is the detonation network (victim, flare, remnux). The victim
-# sends telemetry to the shared Elastic on TTL-SIEM. After deploy, the
-# victim and flare use remnux as their gateway and DNS, with a route to
-# TTL-SIEM via the range router. See docs/ranges.md for the setup steps.
-# Detonate only in testing mode: internet blocked, victim and flare
-# snapshotted and reverted when testing ends.
+# TTL-MAL: malware analysis, following OALabs' two-VM setup. About 17 GB RAM.
+# - static (VLAN 120): Windows 11 with the analysis tools and internet.
+#   Samples are stored here but never run.
+# - dynamic (VLAN 110): Windows 11 with the same tools plus debugging and
+#   monitoring tools, and Elastic Agent. Samples run here, only in testing
+#   mode: entering it snapshots dynamic and cuts its internet (static keeps
+#   internet), leaving it reverts dynamic.
+# The VLANs cannot reach each other. Files reach dynamic over WinRM, only
+# while it is clean; from WireGuard it accepts only RDP and WinRM.
+# Tools come from our role ttl_re_tools (deploy/ludus/roles). See docs/ranges.md.
 
 # Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
 # TTL-SIEM.yml). Replace both placeholders when uploading the config:
@@ -25,48 +28,64 @@ router:
   cpus: 2
 
 ludus:
-  - vm_name: "{{ range_id }}-remnux"
-    hostname: "{{ range_id }}-remnux"
-    template: remnux-template
-    vlan: 10
-    ip_last_octet: 10
-    ram_gb: 4
-    cpus: 2
-    linux: true
-    testing:
-      snapshot: false # keep PCAPs and INetSim logs across reverts
-      block_internet: true
-
-  - vm_name: "{{ range_id }}-victim"
-    hostname: "{{ range_id }}-victim"
+  - vm_name: "{{ range_id }}-static"
+    hostname: "{{ range_id }}-static"
     template: win11-22h2-x64-enterprise-template
-    vlan: 10
+    vlan: 120
+    ip_last_octet: 20
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: false
+    roles:
+      - ttl_re_tools
+    role_vars:
+      ttl_re_tools_profile: static
+    testing:
+      snapshot: false # keeps your notes and work
+      block_internet: false # online even in testing mode
+
+  - vm_name: "{{ range_id }}-dynamic"
+    hostname: "{{ range_id }}-dynamic"
+    template: win11-22h2-x64-enterprise-template
+    vlan: 110
     ip_last_octet: 21
-    ram_gb: 6
+    ram_gb: 8
     cpus: 4
     windows:
       sysprep: false
     roles:
       - badsectorlabs.ludus_elastic_agent
+      - ttl_re_tools
+    role_vars:
+      ttl_re_tools_profile: dynamic
     testing:
-      snapshot: true
-      block_internet: true
-
-  - vm_name: "{{ range_id }}-flare"
-    hostname: "{{ range_id }}-flare"
-    template: flare-vm-template
-    vlan: 10
-    ip_last_octet: 22
-    ram_gb: 16
-    cpus: 4
-    windows:
-      sysprep: false
-    testing:
-      snapshot: true
+      snapshot: true # reverted when testing mode ends
       block_internet: true
 
 network:
-  inter_vlan_default: REJECT
+  inter_vlan_default: REJECT # static and dynamic cannot reach each other
+  # Range VMs never open connections to WireGuard clients (the owner's
+  # machine, ttl-agents). Ludus's default; stated so it is never changed.
+  wireguard_vlan_default: REJECT
+  rules:
+    # From WireGuard, dynamic accepts only the GUI (RDP) and tool commands
+    # and file transfers (WinRM). No SMB. Transfers happen only while
+    # dynamic is clean, before a sample runs (docs/ranges.md).
+    - name: "WireGuard to dynamic: RDP and WinRM only"
+      vlan_src: wireguard
+      vlan_dst: 110
+      ip_last_octet_dst: 21
+      protocol: tcp
+      ports: 3389,5985,5986
+      action: ACCEPT
+    - name: "WireGuard to dynamic: nothing else"
+      vlan_src: wireguard
+      vlan_dst: 110
+      ip_last_octet_dst: 21
+      protocol: all
+      ports: all
+      action: DROP
   # Layer 1 of 2: the range router never forwards to private networks
   # outside the range. Layer 2 is a firewall on the Ludus host that agents
   # cannot change. Keep this block; see docs/ranges.md.

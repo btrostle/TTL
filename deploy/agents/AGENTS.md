@@ -79,7 +79,7 @@ runs at a time, under a 45 GB RAM soft cap. TTL-SIEM runs alongside it.
 | Range | Purpose | Notes |
 |---|---|---|
 | `TTL-SIEM` | Shared Elastic (Kibana, Fleet, Elasticsearch) | Always on. Never testing mode, power-off or delete without the owner |
-| `TTL-MAL` | Malware and app analysis | victim, flare, remnux. Detonate only in testing mode |
+| `TTL-MAL` | Malware analysis | static (online, never runs samples), dynamic (Elastic; samples only in testing mode) |
 | `TTL-WKS` | Basic AD, workstation attacks | DC01, WS01, WS02, linux, kali (VLAN 99) |
 | `TTL-AD` | Full GOAD | Five GOAD VMs and kali; GOAD playbooks run from kali |
 | `ThreatTrails-MVP` | Old Splunk range | Being retired. Don't run new tests there unless the owner asks |
@@ -126,9 +126,8 @@ in detect mode, and the prebuilt detection rules run on the Basic license.
 Put each run in `~/runs/<YYYY-MM-DD>-<short-name>/`:
 
 - `README.md`: goal, test identifier (if applicable), the range and lab
-  hosts, the start and end time in UTC, and for TTL-MAL the mode
-  (`contained` or `observe`) with the `ttl-mode status` output once that
-  exists.
+  hosts, and the start and end time in UTC. For TTL-MAL, the checks
+  that confirmed dynamic had no internet.
 - `commands.md`: every command exactly as run, with the host it ran on and a
   UTC timestamp.
 - `outputs/`: raw output of each command.

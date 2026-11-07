@@ -66,11 +66,6 @@ Known Kali bugs. The workarounds edit packer files on the Ludus host or use
 the Proxmox console. Docs:
 https://docs.ludus.cloud/docs/troubleshooting/client
 
-### Flare-VM: `ScriptContainedMaliciousContent` (Owner)
-
-Needs the dedicated `flare-vm` template added on the Ludus host. Once it is
-built, set `template: flare-vm-template` in the range config.
-
 ### Packer cache fills the disk (Owner)
 
 ISOs pile up in the Ludus user's packer cache on the host.

@@ -31,7 +31,7 @@ Every range operation needs `rangeID` set to the range you are working on
 (`TTL-SIEM`, `TTL-MAL`, `TTL-WKS`, `TTL-AD`; see AGENTS.md). The broker
 refuses ranges that are not on its allowlist. Do not pass `userID`; the
 broker refuses it. VM names are `<rangeID>-<vm>`, for example
-`TTL-MAL-victim`.
+`TTL-MAL-dynamic`.
 
 ## Rules
 

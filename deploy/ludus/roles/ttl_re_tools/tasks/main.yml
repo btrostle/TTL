@@ -1,0 +1,58 @@
+---
+# Installs the TTL-MAL static or dynamic VM's tools (ttl_re_tools_profile).
+# Runs at deploy time, while the range still has internet. IDA Free, Binary
+# Ninja Free and the WSL distro are manual steps (docs/ranges.md), because
+# they need the owner's account or a user login.
+
+- name: Install Chocolatey
+  ansible.windows.win_powershell:
+    script: |
+      if (Get-Command choco.exe -ErrorAction SilentlyContinue) { $Ansible.Changed = $false; return }
+      Set-ExecutionPolicy Bypass -Scope Process -Force
+      [Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072
+      Invoke-Expression ((New-Object Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+
+- name: Install tools with Chocolatey
+  ansible.windows.win_shell: |
+    $choco = "$env:ProgramData\chocolatey\bin\choco.exe"
+    & $choco install {{ item }} -y --no-progress --limit-output
+    if ($LASTEXITCODE -notin 0, 1641, 3010) { exit $LASTEXITCODE }
+  loop: "{{ ttl_re_tools_static_packages + (ttl_re_tools_dynamic_packages if ttl_re_tools_profile == 'dynamic' else []) }}"
+  register: ttl_re_tools_choco
+  failed_when: false
+  changed_when: "'already installed' not in ttl_re_tools_choco.stdout"
+
+- name: Install Python packages
+  ansible.windows.win_shell: |
+    & C:\Python312\python.exe -m pip install --upgrade {{ ttl_re_tools_pip | join(' ') }}
+  register: ttl_re_tools_pip_result
+  failed_when: false
+  when: ttl_re_tools_pip | length > 0
+
+- name: Create the samples folder
+  ansible.windows.win_file:
+    path: "{{ ttl_re_tools_samples_dir }}"
+    state: directory
+
+- name: Keep Microsoft Defender out of the samples folder
+  ansible.windows.win_powershell:
+    script: |
+      Add-MpPreference -ExclusionPath '{{ ttl_re_tools_samples_dir }}'
+  failed_when: false
+
+- name: Enable WSL (WSL1, no nested virtualization)
+  ansible.windows.win_optional_feature:
+    name: Microsoft-Windows-Subsystem-Linux
+    state: present
+  register: ttl_re_tools_wsl
+
+- name: Reboot to finish enabling WSL
+  ansible.windows.win_reboot:
+  when: ttl_re_tools_wsl.reboot_required
+
+- name: Report anything that did not install
+  ansible.builtin.debug:
+    msg: >-
+      Chocolatey failures: {{ ttl_re_tools_choco.results | selectattr('rc', 'ne', 0)
+      | map(attribute='item') | list or 'none' }}.
+      pip: {{ 'failed' if (ttl_re_tools_pip_result.rc | default(0)) != 0 else 'ok' }}.

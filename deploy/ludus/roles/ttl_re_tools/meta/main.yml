@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  role_name: ttl_re_tools
+  author: ThreatTrails
+  description: Reverse engineering tools for the TTL-MAL static and dynamic VMs (Windows 11)
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Windows
+      versions:
+        - all
+dependencies: []

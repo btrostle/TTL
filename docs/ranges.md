@@ -130,6 +130,15 @@ here, so a rebuild can repeat it.
   removing the old ones, so rules pile up as duplicates. Harmless.
 - Test ranges: no Elastic VM; `ludus_elastic_agent` points at TTL-SIEM
   through `global_role_vars`.
+- TTL-MAL's static and dynamic VMs get their tools from our own role,
+  `deploy/ludus/roles/ttl_re_tools`, installed globally by the owner
+  (`ludus ansible role add -d <path to the role>`, as an admin, then make
+  it global). FLARE-VM was dropped: its template build kept failing, and
+  it installs far more than needed. (Edits made while trying it, the build
+  VM's RAM and the `ludus_flarevm` role's retry count, are left on the
+  host unused.)
+- Templates the owner builds must be moved to the Proxmox `SHARED` pool
+  before the broker's user can see them.
 - Host: the range guard (`deploy/ludus/host-guard/`).
 
 ### Deploying a test range
@@ -148,8 +157,8 @@ healthy under the range's policy.
   `badsectorlabs.ludus_elastic_agent` globally as the Ludus admin.
 - Build any missing templates. Check them with `GET /templates`.
   - `TTL-SIEM`: `debian-12-x64-server-template`
-  - `TTL-MAL`: `win11-22h2-x64-enterprise-template`, `flare-vm-template`,
-    `remnux-template`, `debian-12-x64-server-template`
+  - `TTL-MAL`: `win11-22h2-x64-enterprise-template`,
+    `debian-12-x64-server-template`
   - `TTL-WKS`: `win2022-server-x64-template`, `win11-22h2-x64-enterprise-template`,
     `ubuntu-22.04-x64-server-template`, `kali-x64-desktop-template`
   - `TTL-AD`: `win2019-server-x64-template`, `win2016-server-x64-template`,
@@ -167,105 +176,78 @@ broker. TTL-SIEM comes first.
 Elastic Defend runs in **detect** mode, not prevent. The Elastic role sets
 this; check it in Kibana > Fleet after changing any policy.
 
-## TTL-MAL: malware and app analysis
+## TTL-MAL: malware analysis
 
-| VM | VLAN.IP | Role |
-|---|---|---|
-| victim | 10.21 | Windows 11 with Defend. Samples run here |
-| flare | 10.22 | FLARE-VM for static and dynamic analysis |
-| remnux | 10.10 | Gateway and DNS for the victim and flare. INetSim and packet capture |
+Follows OALabs' two-VM setup, plus Elastic on the dynamic VM.
 
-Elastic Agent on the victim reports to TTL-SIEM. Packet capture runs on
-remnux, not on the victim, so samples cannot see or tamper with it.
+| VM | VLAN.IP | Network | Role |
+|---|---|---|---|
+| static | 120.20 | Internet, always | Analysis tools, WSL, notes. Samples are stored but never run |
+| dynamic | 110.21 | None while testing (Elastic only) | Same tools plus x64dbg, Procmon, System Informer, and Elastic Agent. Samples run here |
+
+Both VMs get their tools from our role `ttl_re_tools`
+(`ttl_re_tools_profile: static` or `dynamic`).
+
+**Dynamic's network, enforced by the range router** (a sample with admin
+can't change it):
+
+- In from WireGuard (the owner, ttl-agents): RDP and WinRM only. No SMB.
+- Out: nothing to WireGuard clients (Ludus default, stated in the
+  config), nothing to static (the VLANs reject each other), no internet in
+  testing mode, and TTL-SIEM's Fleet and Elasticsearch ports only.
+- Files go in over WinRM (`evil-winrm` `upload`, or PowerShell
+  `Copy-Item -ToSession`), and only while dynamic is clean, before a
+  sample runs. The network can't tell clean from dirty; this rule can.
+- RDP to dynamic with drive and clipboard redirection off, so a running
+  sample can't reach your files or clipboard.
+
+Testing mode is the dynamic VM's network switch and its reset: entering
+it snapshots dynamic and blocks its internet (static has
+`block_internet: false`, so it stays online), and leaving it reverts
+dynamic. Samples run only in testing mode. Outside testing mode, dynamic
+has internet for setup and updates only.
 
 ### After deploy (internet still on)
 
-1. remnux: built from `remnux-template`, so REMnux and SSH are already
-   installed. Configure INetSim to listen on remnux's VLAN 10
-   address, and redirect all inbound TCP/UDP on that interface to INetSim
-   with iptables, so traffic to hard-coded IPs is answered too.
-2. victim and flare: set the default gateway and DNS to remnux
-   (`10.X.10.10`). Add a persistent route to TTL-SIEM, `192.0.2.(100+S)/32`,
-   via the router (`10.X.10.254`) so Elastic Agent still reaches Elastic.
-3. flare: add a Windows Firewall rule blocking all inbound traffic from the
-   victim's IP. Flare and the victim share VLAN 10, and a sample with admin
-   on the victim could undo a rule placed there, so the rule lives on flare.
-   Connections flare starts to the victim still work.
-4. Check in Fleet that the victim is healthy under the `TTL-MAL` policy.
+1. Both: check the "Report anything that did not install" task in the
+   deploy log.
+2. Both, by hand (owner): install IDA Free and Binary Ninja Free with your
+   own downloads. On static, the WSL distro: `wsl --set-default-version 1`,
+   `wsl --install -d Ubuntu-24.04`, then in Ubuntu
+   `sudo apt install vim gcc make mingw-w64`.
+3. Check in Fleet that dynamic is healthy under the `TTL-MAL` policy.
 
-### Each analysis session
+### Each session
 
-1. Enter testing mode. This snapshots the victim and flare and blocks
-   internet for the range.
-2. Check the boundary from the victim: DNS for any name resolves to
-   remnux, external IPs reach only INetSim, nothing reaches the internet,
-   and TTL-SIEM still receives events. Stop if any check fails.
-3. Copy the sample or installer to the victim from ttl-agents.
-4. Start `tcpdump` on remnux, writing one PCAP per run.
-5. Run the sample. Collect the PCAP, INetSim logs, Elastic alerts and events
-   (ES|QL, namespace `ttl_mal`), and notes into the run folder.
-6. Leave testing mode. The victim and flare revert to their snapshots;
-   remnux keeps its data, and the events stay in TTL-SIEM.
-
-### Contained and observe modes (designed, not built)
-
-remnux will switch the detonation network between two modes with
-`ttl-mode contained|observe|status`. Neither mode can reach the home
-network; the isolation layers above still apply.
-
-- **Contained** (default; remnux boots in this mode): the victim and flare
-  get only INetSim. Nothing leaves the range.
-- **Observe**: victim and flare traffic leaves only through a WireGuard
-  tunnel on remnux to a commercial VPN, with DNS through the tunnel. If the
-  tunnel is down, nothing leaves (kill switch). The VPN account is used
-  only by the lab and is not linked to the owner's personal accounts. The
-  owner installs the WireGuard config on remnux; it is a secret and is
-  never committed or printed. Strip any naming comment from it.
-
-Testing mode stays on in both modes, so snapshots and reverts keep working.
-In observe mode, `POST /testing/allow` permits only the VPN endpoint IP.
-
-**Who may use observe mode:** agents may use it for app vetting. A malware
-run goes into observe mode only when the owner approves that run.
-
-`ttl-mode status` checks the actual result and writes it to the run
-folder: traffic exits from the VPN's IP, contained mode answers outside
-traffic with INetSim, and the home network and Ludus host are unreachable.
-Each run records its mode.
-
-**Traffic capture:** remnux captures every run's packets before the
-tunnel, so the sample cannot see or tamper with the capture. By default a
-run records destinations only (PCAP, DNS, TLS SNI, plus Elastic Defend's
-per-process network events). To read TLS contents, pull session keys from
-the victim and decrypt the remnux PCAP afterwards. This needs no CA on the
-victim and works against certificate pinning:
-
-- `SSLKEYLOGFILE`, set system-wide on the victim, covers browsers and
-  OpenSSL/NSS/BoringSSL apps. It is cheap and suits app vetting.
-- Schannel (WinHTTP/WinINet, most Windows-native malware) ignores it.
-  Those keys need a hooking tool such as friTap. Samples can detect
-  hooking, so enable it per run when needed.
-
-mitmproxy is not used for now.
-
-**Observe-mode hygiene:** the VPN hides the range's IP, but the VMs can
-still identify their owner. Before an observe run, check that the victim
-uses generic hostnames and usernames, a neutral time zone and locale, no
-Microsoft account or Windows sign-in tied to a person, and no personal
-logins in browsers or apps under test.
+1. Static: download the sample (password-protected zip) into
+   `C:\samples` and do the static analysis. Never run it here.
+2. Enter testing mode (dynamic is snapshotted, so it is clean). Allow
+   TTL-SIEM through it (`POST /testing/allow` with `192.0.2.(100+S)`) if
+   Elastic stops receiving events. From dynamic, check: no internet,
+   TTL-SIEM still receives events. Stop if a check fails.
+3. Copy the sample to dynamic over WinRM, into `C:\samples`. This is the
+   last transfer of the session.
+4. Dynamic: run and debug it with x64dbg, Procmon and System Informer.
+   Results leave through Elastic and your notes, not by copying files out.
+5. Collect Elastic alerts and events (ES|QL, namespace `ttl_mal`) and
+   notes into the run folder. Read tool output on screen or through WinRM
+   commands; don't copy files off dynamic.
+6. Leave testing mode. Dynamic reverts; the events stay in TTL-SIEM.
 
 ## TTL-WKS: basic AD
 
 `ttl.lab` with DC01 (Server 2022), WS01 and WS02 (Windows 11), and an
-Ubuntu server, all running Defend, with kali on VLAN 99. A GPO disables
+Ubuntu server on VLAN 110, all running Defend, with kali on VLAN 199. A GPO disables
 Microsoft Defender so attack tools run. The Linux server is not joined to the
 domain. Add SSSD/realmd as a setup step if a test needs it.
 
 ## TTL-AD: full GOAD
 
 The five GOAD VMs use the names, templates and IPs from GOAD's Ludus
-provider config. Deploy the VMs through the broker, then run GOAD's Ansible
-playbooks from kali with a static inventory of the range IPs. Do not run
+provider config, on VLAN 110 instead of GOAD's 10 (kali on 199). Deploy
+the VMs through the broker, then run GOAD's Ansible playbooks from kali
+with a static inventory of the range IPs, with `ip_range` set to
+`10.X.110`. Do not run
 `goad.sh -p ludus`: it calls the Ludus API with its own key, which the lab
 boundary forbids. The GOAD playbooks rename hosts and build the domains
 after Elastic Agent is installed. Check in Fleet that every host

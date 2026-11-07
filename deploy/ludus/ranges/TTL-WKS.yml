@@ -2,7 +2,7 @@
 #
 # TTL-WKS: basic AD network for workstation attacks. About 27 GB RAM.
 # One DC, two Windows 11 workstations (for lateral movement), one Ubuntu
-# server. Every endpoint runs Elastic Defend. Kali sits on its own VLAN.
+# server. Every endpoint runs Elastic Defend. Kali sits on its own VLAN (199).
 
 # Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
 # TTL-SIEM.yml). Replace both placeholders when uploading the config:
@@ -24,7 +24,7 @@ ludus:
   - vm_name: "{{ range_id }}-DC01"
     hostname: "{{ range_id }}-DC01"
     template: win2022-server-x64-template
-    vlan: 10
+    vlan: 110
     ip_last_octet: 11
     ram_gb: 4
     cpus: 2
@@ -41,7 +41,7 @@ ludus:
   - vm_name: "{{ range_id }}-WS01"
     hostname: "{{ range_id }}-WS01"
     template: win11-22h2-x64-enterprise-template
-    vlan: 10
+    vlan: 110
     ip_last_octet: 21
     ram_gb: 6
     cpus: 4
@@ -56,7 +56,7 @@ ludus:
   - vm_name: "{{ range_id }}-WS02"
     hostname: "{{ range_id }}-WS02"
     template: win11-22h2-x64-enterprise-template
-    vlan: 10
+    vlan: 110
     ip_last_octet: 22
     ram_gb: 6
     cpus: 4
@@ -71,7 +71,7 @@ ludus:
   - vm_name: "{{ range_id }}-linux"
     hostname: "{{ range_id }}-linux"
     template: ubuntu-22.04-x64-server-template
-    vlan: 10
+    vlan: 110
     ip_last_octet: 31
     ram_gb: 2
     cpus: 2
@@ -82,7 +82,7 @@ ludus:
   - vm_name: "{{ range_id }}-kali"
     hostname: "{{ range_id }}-kali"
     template: kali-x64-desktop-template
-    vlan: 99
+    vlan: 199
     ip_last_octet: 1
     ram_gb: 8
     cpus: 4

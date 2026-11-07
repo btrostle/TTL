@@ -1,0 +1,32 @@
+---
+# Which VM this is: `static` or `dynamic` (set in the range config).
+ttl_re_tools_profile: static
+
+# Chocolatey packages. A package that fails to install is reported at the
+# end of the role and does not fail the deploy.
+ttl_re_tools_static_packages:
+  - temurin21          # JDK for Ghidra
+  - ghidra
+  - hxd
+  - pebear
+  - die                # Detect It Easy
+  - pestudio
+  - reshack            # Resource Hacker
+  - dnspyex
+  - python312
+  - obsidian
+  - 7zip               # opens password-protected sample archives
+  - git
+
+# The dynamic VM gets the static tools plus these.
+ttl_re_tools_dynamic_packages:
+  - x64dbg.portable
+  - procmon
+  - systeminformer
+
+# pip packages for C:\Python312\python.exe
+ttl_re_tools_pip:
+  - marimo
+
+# Samples live here; Microsoft Defender skips it so it doesn't delete them.
+ttl_re_tools_samples_dir: C:\samples
