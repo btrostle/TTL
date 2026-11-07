@@ -3,10 +3,11 @@
 # TTL-AD: full GOAD (2 forests, 3 domains). About 29 GB RAM.
 # The five GOAD VMs match GOAD's Ludus provider config
 # (ad/GOAD/providers/ludus/config.yml); keep their IPs (last octets), which
-# GOAD's inventory expects. The VLAN is 110, not GOAD's 10 (the home
-# network uses 10), so GOAD's ip_range is 10.X.110. Deploy through the broker, then run GOAD's
-# Ansible playbooks from kali. Do not use goad.sh -p ludus: it calls the
-# Ludus API with its own key. See docs/ranges.md.
+# GOAD's inventory expects. Their VLAN is 140, not GOAD's 10 (the home
+# network uses 10), so GOAD's ip_range is 10.X.140. Kali is on VLAN 149.
+# Deploy through the broker, then run GOAD's Ansible playbooks from kali.
+# Do not use goad.sh -p ludus: it calls the Ludus API with its own key.
+# See docs/ranges.md.
 
 # Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
 # TTL-SIEM.yml). Replace both placeholders when uploading the config:
@@ -28,7 +29,7 @@ ludus:
   - vm_name: "{{ range_id }}-GOAD-DC01" # kingslanding, sevenkingdoms.local
     hostname: "{{ range_id }}-DC01"
     template: win2019-server-x64-template
-    vlan: 110
+    vlan: 140
     ip_last_octet: 10
     ram_gb: 4
     cpus: 2
@@ -40,7 +41,7 @@ ludus:
   - vm_name: "{{ range_id }}-GOAD-DC02" # winterfell, north.sevenkingdoms.local
     hostname: "{{ range_id }}-DC02"
     template: win2019-server-x64-template
-    vlan: 110
+    vlan: 140
     ip_last_octet: 11
     ram_gb: 4
     cpus: 2
@@ -52,7 +53,7 @@ ludus:
   - vm_name: "{{ range_id }}-GOAD-DC03" # meereen, essos.local
     hostname: "{{ range_id }}-DC03"
     template: win2016-server-x64-template
-    vlan: 110
+    vlan: 140
     ip_last_octet: 12
     ram_gb: 4
     cpus: 2
@@ -64,7 +65,7 @@ ludus:
   - vm_name: "{{ range_id }}-GOAD-SRV02" # castelblack, north
     hostname: "{{ range_id }}-SRV02"
     template: win2019-server-x64-template
-    vlan: 110
+    vlan: 140
     ip_last_octet: 22
     ram_gb: 4
     cpus: 2
@@ -76,7 +77,7 @@ ludus:
   - vm_name: "{{ range_id }}-GOAD-SRV03" # braavos, essos
     hostname: "{{ range_id }}-SRV03"
     template: win2019-server-x64-template
-    vlan: 110
+    vlan: 140
     ip_last_octet: 23
     ram_gb: 4
     cpus: 2
@@ -88,7 +89,7 @@ ludus:
   - vm_name: "{{ range_id }}-kali"
     hostname: "{{ range_id }}-kali"
     template: kali-x64-desktop-template
-    vlan: 199
+    vlan: 149
     ip_last_octet: 1
     ram_gb: 8
     cpus: 4

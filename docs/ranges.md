@@ -6,12 +6,17 @@ must stay under the 45 GB RAM soft cap. All of them send telemetry to the one
 Elastic stack on TTL-SIEM (Elastic Defend in detect mode, Basic license,
 prebuilt SIEM rules), so records from every test survive range teardowns.
 
-| Range | Config | Purpose | RAM |
-|---|---|---|---|
-| `TTL-SIEM` | `deploy/ludus/ranges/TTL-SIEM.yml` | Shared Elastic and future shared infrastructure; always on | 9 GB |
-| `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware and app analysis | 27 GB |
-| `TTL-WKS` | `deploy/ludus/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 27 GB |
-| `TTL-AD` | `deploy/ludus/ranges/TTL-AD.yml` | Full GOAD | 29 GB |
+| Range | Config | Purpose | VLANs | RAM |
+|---|---|---|---|---|
+| `TTL-SIEM` | `deploy/ludus/ranges/TTL-SIEM.yml` | Shared Elastic and future shared infrastructure; always on | 100 | 9 GB |
+| `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware analysis | 110 dynamic, 120 static | 17 GB |
+| `TTL-WKS` | `deploy/ludus/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 130, kali 139 | 27 GB |
+| `TTL-AD` | `deploy/ludus/ranges/TTL-AD.yml` | Full GOAD | 140, kali 149 | 29 GB |
+
+Each range has its own block of VLANs (100s, in tens), so an address
+like `10.S.130.x` tells you the range at a glance. Never use 10 or 20:
+those are the home network's VLANs. A new range takes the next free
+block.
 
 ## Home network isolation (all ranges)
 
@@ -42,7 +47,7 @@ through `ttl-template-window.sh`.
 Other ranges reach TTL-SIEM only through its router's WAN address,
 `192.0.2.(100+S)` where S is TTL-SIEM's range number, on TCP 8220 (Fleet)
 and 9200 (Elasticsearch). The router forwards those ports to Elastic at
-`10.S.20.2` using `router.iptables_commands`, the one approved use of that
+`10.S.100.2` using `router.iptables_commands`, the one approved use of that
 setting. The Ludus host guard allows range routers to reach TTL-SIEM on
 those two ports and nothing else. Kibana (5601) is reachable only over
 WireGuard from ttl-agents. A sample or attacker inside a test range can
@@ -71,7 +76,7 @@ reads the Elasticsearch address and password from it:
 ```sh
 TTL_SIEM_ELASTIC_PASSWORD=...   # generated before TTL-SIEM's first deploy
 TTL_SIEM_WAN=192.0.2.1xx        # 192.0.2.(100+S)
-TTL_SIEM_ES=https://10.S.20.2:9200
+TTL_SIEM_ES=https://10.S.100.2:9200
 TTL_MAL_ENROLLMENT_TOKEN=...
 TTL_WKS_ENROLLMENT_TOKEN=...
 TTL_AD_ENROLLMENT_TOKEN=...
@@ -84,7 +89,7 @@ it, for example
 ### After deploying TTL-SIEM
 
 The `ludus_elastic_container` role registers Fleet and the Elasticsearch
-output at `10.S.20.2`, and agents switch to those URLs after enrolling.
+output at `10.S.100.2`, and agents switch to those URLs after enrolling.
 Other ranges cannot route there. From ttl-agents, run:
 
 ```sh
@@ -95,7 +100,7 @@ It is safe to re-run, and after any TTL-SIEM rebuild it must be. It:
 
 1. adds Fleet Server host and Elasticsearch output `ttl-siem-wan`
    (`https://192.0.2.(100+S):8220` and `:9200`, certificate checks off
-   because the certificates are self-signed for `10.S.20.2`) and makes
+   because the certificates are self-signed for `10.S.100.2`) and makes
    both the defaults. Elastic's Basic licence has no per-policy outputs,
    so every agent, including Elastic's own Fleet Server, uses the WAN
    address; the router's hairpin rules bring Elastic's own traffic back;
@@ -237,17 +242,18 @@ has internet for setup and updates only.
 ## TTL-WKS: basic AD
 
 `ttl.lab` with DC01 (Server 2022), WS01 and WS02 (Windows 11), and an
-Ubuntu server on VLAN 110, all running Defend, with kali on VLAN 199. A GPO disables
+Ubuntu server on VLAN 130, all running Defend, with kali on VLAN 139.
+A GPO disables
 Microsoft Defender so attack tools run. The Linux server is not joined to the
 domain. Add SSSD/realmd as a setup step if a test needs it.
 
 ## TTL-AD: full GOAD
 
 The five GOAD VMs use the names, templates and IPs from GOAD's Ludus
-provider config, on VLAN 110 instead of GOAD's 10 (kali on 199). Deploy
+provider config, on VLAN 140 instead of GOAD's 10 (kali on 149). Deploy
 the VMs through the broker, then run GOAD's Ansible playbooks from kali
 with a static inventory of the range IPs, with `ip_range` set to
-`10.X.110`. Do not run
+`10.X.140`. Do not run
 `goad.sh -p ludus`: it calls the Ludus API with its own key, which the lab
 boundary forbids. The GOAD playbooks rename hosts and build the domains
 after Elastic Agent is installed. Check in Fleet that every host

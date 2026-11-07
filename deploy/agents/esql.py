@@ -3,7 +3,7 @@
     python3 ~/ttl/esql.py 'FROM logs-endpoint.events.process-ttl_mal | LIMIT 10'
     python3 ~/ttl/esql.py --format csv '<query>' > elastic/process.csv
 
-Reads TTL_SIEM_ES (https://10.S.20.2:9200) and TTL_SIEM_ELASTIC_PASSWORD from
+Reads TTL_SIEM_ES (https://10.S.100.2:9200) and TTL_SIEM_ELASTIC_PASSWORD from
 ~/.config/ttl/siem.env. Prints only the results (txt by default; csv, tsv or
 json with --format). The certificate is self-signed, so it is not verified.
 """

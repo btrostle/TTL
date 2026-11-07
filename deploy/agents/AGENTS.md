@@ -100,7 +100,7 @@ runs at a time, under a 45 GB RAM soft cap. TTL-SIEM runs alongside it.
 Every test range's Elastic Agents report to TTL-SIEM. Elastic Defend runs
 in detect mode, and the prebuilt detection rules run on the Basic license.
 
-- Kibana: `https://10.S.20.2:5601`, where S is TTL-SIEM's range number
+- Kibana: `https://10.S.100.2:5601`, where S is TTL-SIEM's range number
   (`TTL_SIEM_ES` in `siem.env` has the address). User `elastic`, password
   `TTL_SIEM_ELASTIC_PASSWORD` in `siem.env`. Certificates are self-signed.
 - Queries: `python3 ~/ttl/esql.py '<ES|QL>'` (add `--format csv` to save
