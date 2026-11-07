@@ -4,7 +4,9 @@
 
 Other scripts can import it and use call(arguments).
 
-Reads TTL_BROKER_TOKEN from ~/.config/ttl/broker.env. Standard library only.
+Reads TTL_BROKER_URL (the broker's MCP endpoint, http://<broker>:8765/mcp)
+and TTL_BROKER_TOKEN from ~/.config/ttl/broker.env, or from the environment.
+Standard library only.
 """
 
 import json
@@ -12,19 +14,22 @@ import os
 import sys
 import urllib.request
 
-URL = os.environ.get("TTL_BROKER_URL", "http://192.168.13.10:8765/mcp")
+ENV = os.path.expanduser("~/.config/ttl/broker.env")
 
 
-def token():
-    for line in open(os.path.expanduser("~/.config/ttl/broker.env")):
-        if "TTL_BROKER_TOKEN=" in line:
+def setting(name):
+    """Read a setting from the environment, then from ~/.config/ttl/broker.env."""
+    if os.environ.get(name):
+        return os.environ[name]
+    for line in open(ENV):
+        if line.strip().startswith(name + "="):
             return line.split("=", 1)[1].strip().strip('"')
-    sys.exit("TTL_BROKER_TOKEN not found in ~/.config/ttl/broker.env")
+    sys.exit(f"{name} not found in {ENV}")
 
 
 def call(arguments):
     """Call ludus_request with a dict of arguments. Returns (text, is_error)."""
-    tok, sid = token(), None
+    url, tok, sid = setting("TTL_BROKER_URL"), setting("TTL_BROKER_TOKEN"), None
 
     def post(msg):
         nonlocal sid
@@ -35,7 +40,7 @@ def call(arguments):
         }
         if sid:
             headers["mcp-session-id"] = sid
-        req = urllib.request.Request(URL, json.dumps(msg).encode(), headers)
+        req = urllib.request.Request(url, json.dumps(msg).encode(), headers)
         with urllib.request.urlopen(req, timeout=180) as r:
             sid = r.headers.get("mcp-session-id") or sid
             body = r.read().decode()

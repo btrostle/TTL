@@ -75,5 +75,6 @@ Code, Codex) as the unprivileged user `agent`. `deploy/agents/agents-box.sh` set
 up from a fresh VM: a root-only WireGuard tunnel for the agents' own Ludus
 user, routing only the range subnets; no sudo for `agent`; and an nftables
 backstop that rejects `agent` traffic to the Ludus host. Agents reach Ludus
-only through the broker. The broker token is in
-`/home/agent/.config/ttl/broker.env`.
+only through the broker. `/home/agent/.config/ttl/broker.env` holds
+`TTL_BROKER_URL` (the broker's MCP endpoint, `http://<broker>:8765/mcp`) and
+`TTL_BROKER_TOKEN`.
