@@ -2,7 +2,7 @@
 
 Each row shows a `ludus` CLI command and the broker call that does the same
 thing. This table helps with translation only. What the broker allows is what
-`list_operations` returns; if the two disagree, `list_operations` is right. `R` means `"query": {"rangeID": "ThreatTrails-MVP"}`. Field names are
+`list_operations` returns; if the two disagree, `list_operations` is right. `R` means `"query": {"rangeID": "<range>"}`, the range you are working on. Field names are
 from the Ludus API v2.1 OpenAPI spec; check `GET /openapi` if a call fails.
 
 ## Table of Contents
@@ -28,13 +28,13 @@ from the Ludus API v2.1 OpenAPI spec; check `GET /openapi` if a call fails.
 | `ludus range deploy` | `POST /range/deploy`, R, `body`: `{}` |
 | `ludus range deploy -t network` | `POST /range/deploy`, R, `body`: `{"tags": "network"}` |
 | `ludus range deploy --only-roles a,b` | `POST /range/deploy`, R, `body`: `{"only_roles": ["a", "b"]}` |
-| `ludus range deploy -l VM` | `POST /range/deploy`, R, `body`: `{"limit": "ThreatTrails-MVP-<vm>"}` |
+| `ludus range deploy -l VM` | `POST /range/deploy`, R, `body`: `{"limit": "<range>-<vm>"}` |
 | `ludus range deploy --force` | add `"force": true` to the deploy body (deploys while testing mode is on) |
 | `ludus range logs` | `GET /range/logs`, R. Add `"tail": 50` to `query` for the last lines |
 | `ludus range errors` | No API call. Read `GET /range/logs` and search for `fatal:` and `ERROR!`, skipping lines followed by `...ignoring` |
 | `ludus range taskoutput "<task>"` | No API call. Search `GET /range/logs` for the task name |
 | `ludus range abort` | `POST /range/abort`, R |
-| `ludus range rm` | `DELETE /range/ThreatTrails-MVP/vms`. Standing owner authorization |
+| `ludus range rm` | `DELETE /range/<range>/vms`. Standing owner authorization |
 | `ludus range inventory` | `GET /range/ansibleinventory`, R. Contains passwords |
 | `ludus range etc-hosts` | `GET /range/etchosts`, R |
 | `ludus range rdp` | `GET /range/rdpconfigs`, R (zip, returned base64) |
@@ -63,7 +63,7 @@ the plugin is not loaded on this Ludus server. Power off by hand.
 | `ludus testing stop` | `PUT /testing/stop`, R. Reverts the testing snapshot |
 | `ludus testing allow -d x.com` | `POST /testing/allow`, R, `body`: `{"domains": ["x.com"]}` or `{"ips": [...]}` |
 | `ludus testing deny -d x.com` | `POST /testing/deny`, R, same body |
-| `ludus testing update -n VM` | `POST /testing/update`, R, `body`: `{"name": "ThreatTrails-MVP-<vm>"}` (updates the VM while testing mode is on) |
+| `ludus testing update -n VM` | `POST /testing/update`, R, `body`: `{"name": "<range>-<vm>"}` (updates the VM while testing mode is on) |
 
 ## Snapshots
 
@@ -100,8 +100,8 @@ the plugin is not loaded on this Ludus server. Power off by hand.
 |---|---|
 | `ludus blueprint list` | `GET /blueprints` |
 | `ludus blueprint config get <id>` | `GET /blueprints/{blueprintID}/config` |
-| `ludus blueprint create -s ThreatTrails-MVP` | `POST /blueprints/from-range`, `body`: `{"blueprintID": "...", "name": "...", "description": "...", "rangeID": "ThreatTrails-MVP"}` |
-| `ludus blueprint apply <id>` | `POST /blueprints/{blueprintID}/apply`, `body`: `{"rangeID": "ThreatTrails-MVP", "force": false}`. Replaces the range config; ask the owner first |
+| `ludus blueprint create -s <range>` | `POST /blueprints/from-range`, `body`: `{"blueprintID": "...", "name": "...", "description": "...", "rangeID": "<range>"}` |
+| `ludus blueprint apply <id>` | `POST /blueprints/{blueprintID}/apply`, `body`: `{"rangeID": "<range>", "force": false}`. Replaces the range config; ask the owner first |
 | `ludus blueprint rm <id>` | Blocked. Report the blueprint to the owner (see below) |
 
 Sources (`/sources/...`) can be listed and synced. Deleting them and
@@ -124,4 +124,4 @@ These are refused by the broker. Do not try to reach them another way:
   through `/sources/{id}/install` and `/blueprints/{id}/install`. The owner
   keeps the role pool. Check `GET /ansible`; if a role is missing, tell the
   owner its Galaxy name or URL, the version, and why the test needs it.
-- Any `-u/--user` impersonation, and any range other than `ThreatTrails-MVP`.
+- Any `-u/--user` impersonation, and any range not on the broker allowlist.

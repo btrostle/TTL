@@ -61,6 +61,26 @@ the password on ttl-agents outside the repo, and never commit or print it.
 Never put TTL-SIEM in testing mode, and don't destroy it: it holds the
 records of every run.
 
+### Secrets file on ttl-agents
+
+The agents keep TTL-SIEM's address and secrets in
+`~/.config/ttl/siem.env` (mode 600, never committed or printed).
+`upload-config.py` fills range config placeholders from it, and `esql.py`
+reads the Elasticsearch address and password from it:
+
+```sh
+TTL_SIEM_ELASTIC_PASSWORD=...   # generated before TTL-SIEM's first deploy
+TTL_SIEM_WAN=192.0.2.1xx        # 192.0.2.(100+S)
+TTL_SIEM_ES=https://10.S.20.2:9200
+TTL_MAL_ENROLLMENT_TOKEN=...
+TTL_WKS_ENROLLMENT_TOKEN=...
+TTL_AD_ENROLLMENT_TOKEN=...
+```
+
+Before TTL-SIEM's first deploy, generate the password without printing
+it, for example
+`umask 077; printf 'TTL_SIEM_ELASTIC_PASSWORD=%s\n' "$(openssl rand -hex 24)" >> ~/.config/ttl/siem.env`.
+
 ### After deploying TTL-SIEM
 
 The `ludus_elastic_container` role registers Fleet and the Elasticsearch
@@ -77,8 +97,8 @@ Other ranges cannot route there, so add the WAN addresses in Kibana
    `TTL-MAL`, `TTL-WKS`, `TTL-AD`, with namespaces `ttl_mal`, `ttl_wks`,
    `ttl_ad`. Set each copy's Fleet Server host and output to
    `ttl-siem-wan`.
-4. Create an enrollment token for each copy. Keep the tokens on ttl-agents
-   outside the repo.
+4. Create an enrollment token for each copy and add it to `siem.env`. Add
+   `TTL_SIEM_WAN` and `TTL_SIEM_ES` too.
 5. The owner sets `siem_wan` in the host guard to `192.0.2.(100+S)` and
    reloads it (see `deploy/ludus/host-guard/`).
 

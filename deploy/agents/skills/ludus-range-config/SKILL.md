@@ -1,13 +1,18 @@
 ---
 name: ludus-range-config
-description: Read, edit, and validate the ThreatTrails-MVP Ludus range config YAML (VMs, domains, networking, router, testing, roles). Use when asked to change what the range contains or how it is networked, or to review a range config.
+description: Read, edit, and validate a TTL Ludus range config YAML (VMs, domains, networking, router, testing, roles). Use when asked to change what the range contains or how it is networked, or to review a range config.
 ---
 
 # Ludus range config
 
-The config for `ThreatTrails-MVP` is kept in the TTL repo at
-`deploy/ludus/ranges/ThreatTrails-MVP.yml`. The live copy is on Ludus. Call the
-broker as the `ludus-api` skill describes.
+Each range's config is kept in the TTL repo at
+`deploy/ludus/ranges/<range>.yml`, installed on this box in `~/ttl/ranges/`.
+The live copy is on Ludus. Call the broker as the `ludus-api` skill
+describes.
+
+The repo configs hold placeholders for secrets and addresses
+(`TTL_SIEM_WAN`, `TTL_SIEM_ELASTIC_PASSWORD`, `TTL_<RANGE>_ENROLLMENT_TOKEN`).
+Keep them as placeholders in every file you edit or show.
 
 ## Rules for this lab
 
@@ -26,7 +31,13 @@ broker as the `ludus-api` skill describes.
    `172.16.0.0/12` in every range config. It is layer 1 of the home-network
    block (see AGENTS.md). Never remove or narrow it, and never add
    `router.iptables_commands` or rules that reach private networks outside
-   `10.0.0.0/8`. Before uploading, check that the block is still there.
+   `10.0.0.0/8`. The only exception is TTL-SIEM's router
+   `iptables_commands`, which must stay exactly as committed. Before
+   uploading, check that the block is still there.
+7. **Keep the Elastic wiring.** Test ranges keep `global_role_vars` with
+   the Fleet URL and enrollment token placeholders. Agents use the
+   `badsectorlabs.ludus_elastic_agent` role with no `depends_on`. No test
+   range gets its own Elastic VM.
 
 ## Ludus config rules
 
@@ -35,7 +46,7 @@ broker as the `ludus-api` skill describes.
    # yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
    ```
 2. Use `{{ range_id }}` in `vm_name` and `hostname`. It resolves to
-   `ThreatTrails-MVP`.
+   `<range>`.
 3. Windows hostnames are 15 characters at most (NETBIOS).
 4. VLANs are 2-255 and become the third octet of the IP (vlan 20 = 10.X.20.Y).
 5. `ip_last_octet` is unique within a VLAN.
@@ -46,15 +57,16 @@ broker as the `ludus-api` skill describes.
 
 ## Workflow
 
-1. Read the live config: `GET /range/config` with `rangeID=ThreatTrails-MVP`.
-   Compare it with the repo copy and report any difference.
+1. Read the live config: `GET /range/config` with `rangeID=<range>`.
+   Compare it with the repo copy and report any difference. The live copy
+   has the secrets filled in: compare it in a script, and don't print it.
 2. Make the change in small steps. Check it against `references/schema.md`.
 3. Check templates and roles (rules 4 and 5).
 4. Show the owner the diff and the RAM total. Wait for approval.
-5. Upload: `PUT /range/config` with `rangeID`, the YAML in `file_text`, and
-   `body` `{"force": "false"}`. Read it back with `GET /range/config` and
-   compare.
-6. Update `deploy/ludus/ranges/ThreatTrails-MVP.yml` to match.
+5. Write the change to `~/ttl/ranges/<range>.yml` (placeholders intact),
+   then upload with `python3 ~/ttl/upload-config.py <range>`. It reads the
+   config back and reports whether it matches.
+6. Give the owner the diff to commit to `deploy/ludus/ranges/<range>.yml`.
 7. A config change takes effect on the next deploy. Use the `ludus-deploy`
    skill, which needs the owner's go-ahead.
 

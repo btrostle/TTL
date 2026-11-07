@@ -18,7 +18,7 @@ Ludus API v2.
 Both take the same arguments:
 
 ```json
-{"method": "GET", "path": "/range", "query": {"rangeID": "ThreatTrails-MVP"}}
+{"method": "GET", "path": "/range", "query": {"rangeID": "TTL-MAL"}}
 ```
 
 - `path` is relative to `/api/v2`, with no query string.
@@ -27,8 +27,11 @@ Both take the same arguments:
 - `file_text` is for `PUT /range/config` only: the YAML text, with form fields
   such as `force` in `body`.
 
-Every range operation needs `rangeID=ThreatTrails-MVP`. Other ranges are
-refused. Do not pass `userID`; the broker refuses it.
+Every range operation needs `rangeID` set to the range you are working on
+(`TTL-SIEM`, `TTL-MAL`, `TTL-WKS`, `TTL-AD`; see AGENTS.md). The broker
+refuses ranges that are not on its allowlist. Do not pass `userID`; the
+broker refuses it. VM names are `<rangeID>-<vm>`, for example
+`TTL-MAL-victim`.
 
 ## Rules
 
@@ -42,6 +45,12 @@ refused. Do not pass `userID`; the broker refuses it.
 - Deploying, powering on, and deleting range VMs have standing owner
   authorization; no further approval is needed. Ask before rolling back
   snapshots. See the `ludus-deploy` skill for deploys.
+- Upload range configs with `python3 ~/ttl/upload-config.py <range>`,
+  not with a direct `PUT /range/config`: the configs hold secret
+  placeholders that the script fills without printing them.
+- `GET /range/config` for a range that has been uploaded returns the
+  filled config, including tokens and the Elastic password. Don't print it
+  or save it to a run folder.
 - `GET /range/ansibleinventory` returns range VM passwords. They are not
   sensitive: you may use, print, and save them.
 - Roles, collections, and templates are the owner's. Report anything to

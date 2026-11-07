@@ -31,8 +31,9 @@ Inside the lab, agents may carry out assigned security tests.
 - Keep it simple. Build the smallest thing that works, then improve it.
 - Never commit or print secrets.
 - Range VM passwords (from `GET /range/ansibleinventory`) are not sensitive.
-  Agents are approved to fetch, use, print, and store them. The Splunk
-  admin login is documented in `deploy/agents/AGENTS.md`.
+  Agents are approved to fetch, use, print, and store them. The TTL-SIEM
+  Elastic password and enrollment tokens are secrets: they live only in
+  `~/.config/ttl/siem.env` on ttl-agents (see `docs/ranges.md`).
 - This repository is public. Do not commit home network details (subnets,
   host IPs, firewall rules, known gaps). Put them in `private/`, which is
   gitignored. Lab notes for the owner are in `private/network-context.md`.

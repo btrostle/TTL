@@ -37,7 +37,7 @@ Run the tests with `uv run pytest`.
 ## First milestone
 
 An agent runs one test on one lab host and produces a run folder with the
-commands, outputs, and Splunk events.
+commands, outputs, and Elastic events.
 
 ## Deploy the broker with Docker
 

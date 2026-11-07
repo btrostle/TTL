@@ -1,6 +1,6 @@
 ---
 name: ludus-troubleshooting
-description: Diagnose ThreatTrails-MVP Ludus deploy, template, network, WinRM, and Ansible failures through the broker. Use when a deploy or template build fails, the range is in ERROR, or a range VM is unreachable.
+description: Diagnose TTL range Ludus deploy, template, network, WinRM, and Ansible failures through the broker. Use when a deploy or template build fails, the range is in ERROR, or a range VM is unreachable.
 ---
 
 # Ludus troubleshooting
@@ -13,7 +13,7 @@ and the doc link, and do not try to do it another way.
 ## Workflow
 
 1. Get the exact error text.
-2. Range state: `GET /range` with `rangeID=ThreatTrails-MVP`. Note
+2. Range state: `GET /range` with `rangeID=<range>`. Note
    `rangeState`, `testingEnabled`, and each VM's power state.
 3. Errors: `GET /range/logs`. Search for `fatal:` and `ERROR!`, skipping
    lines followed by `...ignoring`. Read the `PLAY RECAP`. For older runs use
@@ -24,9 +24,14 @@ and the doc link, and do not try to do it another way.
    Roles: `GET /ansible`.
 6. Check the VM itself from `kali` or `ttl-agents`: ping, SSH (Linux) or
    WinRM HTTPS 5986 (Windows).
-7. Fix what you can through the broker or on the range VMs. Redeploys have
+7. Missing telemetry: check the agent in Kibana > Fleet, then from the VM
+   check that TTL-SIEM's router (`192.0.2.(100+S)`) answers on 8220 and
+   9200. If it doesn't, check `TTL_SIEM_WAN` was filled at upload
+   (`upload-config.py <range> --check`). A range in testing mode may block
+   it; that is an open question, so report what you see to the owner.
+8. Fix what you can through the broker or on the range VMs. Redeploys have
    standing owner authorization (see `ludus-deploy`).
-8. Confirm the fix: the range reaches `SUCCESS` and the VM answers.
+9. Confirm the fix: the range reaches `SUCCESS` and the VM answers.
 
 ## Common patterns
 

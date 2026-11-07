@@ -1,21 +1,21 @@
 # ThreatTrails Lab
 
 You are an agent on `ttl-agents`, running as the unprivileged user `agent`.
-The lab exists to run security tests in a Ludus range and record the
+The lab exists to run security tests in Ludus ranges and record the
 commands, their outputs, and the telemetry they produce.
 
 ## Authorization and scope
 
-The owner authorizes security testing in this homelab. The range
-`ThreatTrails-MVP` and its VMs listed below are the test systems. You may
-carry out assigned tests on those VMs and use the range credentials returned
+The owner authorizes security testing in this homelab. The ranges listed
+under **Ranges** below and their VMs are the test systems. You may carry
+out assigned tests on those VMs and use the range credentials returned
 by the broker to access them. Agents have full administrative authority
 inside range VMs, including `sudo`/root on Linux and Administrator on
 Windows. The unprivileged `agent` account and no-sudo restriction apply only
 to `ttl-agents`, the orchestration host. No separate approval is needed for
 each test step or command within this scope. Record what you do under **Runs** below.
 
-This authorization covers only the range. The limits below still apply.
+This authorization covers only those ranges. The limits below still apply.
 
 ## Hard limits
 
@@ -36,13 +36,16 @@ Carry out authorized lab tasks inside the range. Outside it:
   `POST /testing/allow` for private addresses. The one exception is the
   TTL-SIEM router's `iptables_commands`, which forward Fleet and
   Elasticsearch to Elastic. Keep them exactly as in
-  `deploy/ludus/ranges/TTL-SIEM.yml`. If a range VM can reach a private
+  `~/ttl/ranges/TTL-SIEM.yml`. If a range VM can reach a private
   address outside `10.0.0.0/8`, or another range's router on anything
   but TTL-SIEM's ports 8220 and 9200, stop and tell the owner.
 - TTL-SIEM holds the shared Elastic and the records of every run. Never
   put it in testing mode, power it off, or delete it unless the owner says
-  so. Enrollment tokens and the TTL-SIEM Elastic password are secrets: fill them into a range config only
-  when uploading it, and never commit them.
+  so. Enrollment tokens and the TTL-SIEM Elastic password are secrets. They
+  live in `~/.config/ttl/siem.env`. Use them through
+  `~/ttl/upload-config.py` and `~/ttl/esql.py`, or as `$VARIABLES` after
+  sourcing the file (for example in Kibana API calls). Never print,
+  commit, or record their values.
 - The owner grants standing authorization to deploy, power on, or delete
   range VMs without further approval. The Proxmox host is short on memory
   and has frozen once from a full range build. Never start a deploy close
@@ -55,46 +58,78 @@ Carry out authorized lab tasks inside the range. Outside it:
 - Claude Code and Codex: the `ludus` MCP server. Call `list_operations` to see
   what is allowed and `ludus_request` to call the Ludus API v2.
 - pi and scripts: `python3 ~/ttl/mcpcall.py '<json arguments>'`, for example
-  `python3 ~/ttl/mcpcall.py '{"method": "GET", "path": "/range", "query": {"rangeID": "ThreatTrails-MVP"}}'`.
-- Every range operation needs `rangeID=ThreatTrails-MVP`.
+  `python3 ~/ttl/mcpcall.py '{"method": "GET", "path": "/range", "query": {"rangeID": "TTL-MAL"}}'`.
+- Every range operation needs `rangeID` set to the range you are working
+  on. The broker refuses ranges that are not on its allowlist; if you need
+  one added, ask the owner.
 - `GET /openapi` returns the full Ludus API description.
 - Ludus skills: `ludus-api` (CLI commands as broker calls), `ludus-deploy`,
   `ludus-range-config`, `ludus-troubleshooting`, `ludus-environments`.
 
-## Range: ThreatTrails-MVP
+## Ranges
 
-| VM | IP | Use | Access |
-|---|---|---|---|
-| ar-splunk | 10.3.20.1 | Splunk (web 8000, REST 8089, receiver 9997) | SSH |
-| ar-linux | 10.3.20.2 | Ubuntu target, Splunk forwarder | SSH |
-| ar-windows | 10.3.20.3 | Windows Server 2022 target, Splunk forwarder | WinRM HTTPS 5986, RDP, SMB |
-| kali | 10.3.20.4 | Lab tools VM | SSH |
-| router | 10.3.20.254 | Range router | none needed |
+Configs are in `~/ttl/ranges/` (from `deploy/ludus/ranges/` in the TTL
+repo); `~/ttl/ranges.md` (`~/ttl/ranges.md` in the repo) has the full design. Only one test range
+runs at a time, under a 45 GB RAM soft cap. TTL-SIEM runs alongside it.
 
-- Logins come from `GET /range/ansibleinventory` (`ansible_user` and
-  `ansible_ssh_pass` per host: `localuser` on ar-splunk, ar-linux, and
-  ar-windows, `kali` on kali). You are approved to access all range
-  passwords. They are not sensitive: you may print them, and store them in
-  run folders, logs, or files on `ttl-agents`.
-- Run lab tools from `kali` over SSH. Keep `ttl-agents` for
-  orchestration and recording.
-- Splunk admin login: `admin` / `changeme123!`. Web is plain HTTP at
-  `http://10.3.20.1:8000`. The REST API is HTTPS on 8089 with a self-signed
-  certificate, for example
-  `curl -sk -u 'admin:changeme123!' https://10.3.20.1:8089/services/search/jobs/export -d search='| metadata type=hosts index=*' -d output_mode=csv`.
-- Windows events are in index `win` (sourcetype `XmlWinEventLog`) under host
-  `THREATTRAILS-MV`, the 15-character NetBIOS name, not `ar-windows`.
+| Range | Purpose | Notes |
+|---|---|---|
+| `TTL-SIEM` | Shared Elastic (Kibana, Fleet, Elasticsearch) | Always on. Never testing mode, power-off or delete without the owner |
+| `TTL-MAL` | Malware and app analysis | victim, flare, remnux. Detonate only in testing mode |
+| `TTL-WKS` | Basic AD, workstation attacks | DC01, WS01, WS02, linux, kali (VLAN 99) |
+| `TTL-AD` | Full GOAD | Five GOAD VMs and kali; GOAD playbooks run from kali |
+| `ThreatTrails-MVP` | Old Splunk range | Being retired. Don't run new tests there unless the owner asks |
+
+- VM IPs are `10.<range number>.<vlan>.<last octet>` from each config.
+  Logins come from `GET /range/ansibleinventory`. You are approved to
+  access all range VM passwords. They are not sensitive: you may print
+  them, and store them in run folders, logs, or files on `ttl-agents`.
+- Run lab tools from a range VM (kali, or the analysis VMs in TTL-MAL).
+  Keep `ttl-agents` for orchestration and recording.
+- Upload a range config only with `python3 ~/ttl/upload-config.py <range>`.
+  It fills the placeholders (`TTL_SIEM_WAN`, `TTL_SIEM_ELASTIC_PASSWORD`,
+  `TTL_<RANGE>_ENROLLMENT_TOKEN`) from `~/.config/ttl/siem.env` and never
+  prints them. `--check` lists which ones are set.
+
+## Elastic (TTL-SIEM)
+
+Every test range's Elastic Agents report to TTL-SIEM. Elastic Defend runs
+in detect mode, and the prebuilt detection rules run on the Basic license.
+
+- Kibana: `https://10.S.20.2:5601`, where S is TTL-SIEM's range number
+  (`TTL_SIEM_ES` in `siem.env` has the address). User `elastic`, password
+  `TTL_SIEM_ELASTIC_PASSWORD` in `siem.env`. Certificates are self-signed.
+- Queries: `python3 ~/ttl/esql.py '<ES|QL>'` (add `--format csv` to save
+  results). It reads the address and password from `siem.env`.
+- Each range has its own agent policy and namespace: `ttl_mal`, `ttl_wks`,
+  `ttl_ad`. Filter on the namespace and the run's time window, for example:
+
+  ```
+  FROM logs-endpoint.events.process-ttl_mal
+  | WHERE @timestamp >= TO_DATETIME("2026-11-07T14:00:00Z")
+  | KEEP @timestamp, host.name, process.name, process.command_line, process.parent.name
+  | SORT @timestamp | LIMIT 500
+  ```
+
+- Useful sources: `logs-endpoint.events.*` (Defend process, file,
+  network, registry events), `logs-endpoint.alerts-*` (Defend alerts),
+  `logs-windows.*` and `logs-system.*` (Windows logs and Sysmon),
+  `.alerts-security.alerts-default` (detection rule alerts). Check field
+  names with `| LIMIT 1` before you write a long query.
 
 ## Runs
 
 Put each run in `~/runs/<YYYY-MM-DD>-<short-name>/`:
 
-- `README.md`: goal, test identifier (if applicable), lab host, and the start
-  and end time in UTC.
+- `README.md`: goal, test identifier (if applicable), the range and lab
+  hosts, the start and end time in UTC, and for TTL-MAL the mode
+  (`contained` or `observe`) with the `ttl-mode status` output once that
+  exists.
 - `commands.md`: every command exactly as run, with the host it ran on and a
   UTC timestamp.
 - `outputs/`: raw output of each command.
-- `splunk/`: each search you ran and its results.
+- `elastic/`: each ES|QL query you ran and its results.
 
-Range VM passwords may appear in runs. Leave out broker tokens and any
-Ludus or Proxmox credentials.
+Range VM passwords may appear in runs. Leave out broker tokens, anything
+from `siem.env`, and any Ludus or Proxmox credentials. Record commands that
+use them as written (`esql.py ...`), never with values filled in.

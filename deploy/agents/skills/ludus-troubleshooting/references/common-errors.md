@@ -41,7 +41,7 @@ Send these in the `POST /range/deploy` body:
 - `"tags": "custom-groups"`: Ansible groups.
 - `"tags": "share"`: SMB shares.
 - `"only_roles": ["<role>"]`: one role.
-- `"limit": "ThreatTrails-MVP-<vm>"`: one VM. `localhost` matches nothing.
+- `"limit": "<range>-<vm>"`: one VM. `localhost` matches nothing.
 
 ### "Unable to retrieve API task ID from node ... port=8006: Read timed out" (Owner)
 

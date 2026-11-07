@@ -1,6 +1,6 @@
 ---
 name: ludus-environments
-description: Find and plan pre-built Ludus environments (GOAD, SCCM, ADCS, Elastic, Splunk Attack Range, Vulhub, and others) for a test in ThreatTrails-MVP. Use when a test needs a lab setup the range does not have, or when asked which environment fits a goal.
+description: Find and plan pre-built Ludus environments (GOAD, SCCM, ADCS, Elastic, Splunk Attack Range, Vulhub, and others) for a test in the TTL ranges. Use when a test needs a lab setup the range does not have, or when asked which environment fits a goal.
 ---
 
 # Ludus environments
@@ -9,11 +9,16 @@ description: Find and plan pre-built Ludus environments (GOAD, SCCM, ADCS, Elast
 templates, roles, resources, and config snippets. Here they are plans, not
 something you can deploy on your own:
 
-- The broker allows only one range, `ThreatTrails-MVP`. Using an environment
-  means changing that range's config (the `ludus-range-config` skill).
-- The Proxmox host is short on memory. The range budget is a 45 GB RAM soft
-  cap, with one range up at a time. Large AD environments may not fit
-  alongside the existing VMs (GOAD alone needs about 40 GB).
+- The lab has three purpose-built test ranges (TTL-MAL, TTL-WKS, TTL-AD;
+  see AGENTS.md). Start from the closest one. A new range or a changed
+  range needs the owner's approval, and a new range also needs to be added
+  to the broker allowlist by the owner.
+- The Proxmox host is short on memory. Each test range has a 45 GB RAM
+  soft cap, with one test range up at a time next to TTL-SIEM (about
+  9 GB).
+- Telemetry goes to TTL-SIEM. Don't add Elastic or Splunk servers from an
+  environment; give its VMs the `badsectorlabs.ludus_elastic_agent` role
+  and the range's `global_role_vars` instead.
 - Roles and collections must be installed globally by the owner. The broker
   blocks installs, including source and blueprint installs.
 - Templates must already be built (`GET /templates`).
@@ -21,9 +26,9 @@ something you can deploy on your own:
 ## Workflow
 
 1. Find what the test needs: OS, domain, services, telemetry.
-2. Check whether the current range already covers it (`GET /range/config`).
-   Prefer adding one VM or one role to the current range over a new
-   environment.
+2. Check whether an existing TTL range already covers it
+   (`~/ttl/ranges/`). Prefer adding one VM or one role to an existing range
+   over a new environment.
 3. Pick the smallest matching environment from `references/environments.md`.
    Write down its templates, roles, collections, and RAM.
 4. Check what is missing: `GET /templates` and `GET /ansible`.

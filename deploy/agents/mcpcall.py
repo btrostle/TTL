@@ -1,6 +1,8 @@
 """Call the broker's ludus_request tool without an MCP client.
 
-    python3 mcpcall.py '{"method": "GET", "path": "/range", "query": {"rangeID": "ThreatTrails-MVP"}}'
+    python3 mcpcall.py '{"method": "GET", "path": "/range", "query": {"rangeID": "TTL-MAL"}}'
+
+Other scripts can import it and use call(arguments).
 
 Reads TTL_BROKER_TOKEN from ~/.config/ttl/broker.env. Standard library only.
 """
@@ -20,7 +22,8 @@ def token():
     sys.exit("TTL_BROKER_TOKEN not found in ~/.config/ttl/broker.env")
 
 
-def main():
+def call(arguments):
+    """Call ludus_request with a dict of arguments. Returns (text, is_error)."""
     tok, sid = token(), None
 
     def post(msg):
@@ -45,11 +48,16 @@ def main():
         "protocolVersion": "2025-06-18", "capabilities": {}, "clientInfo": {"name": "mcpcall", "version": "0"}}})
     post({"jsonrpc": "2.0", "method": "notifications/initialized"})
     res = post({"jsonrpc": "2.0", "id": 2, "method": "tools/call",
-                "params": {"name": "ludus_request", "arguments": json.loads(sys.argv[1])}})
+                "params": {"name": "ludus_request", "arguments": arguments}})
     result = res.get("result", res)
-    for item in result.get("content", []):
-        print(item.get("text", ""))
-    if result.get("isError"):
+    text = "\n".join(item.get("text", "") for item in result.get("content", []))
+    return text, bool(result.get("isError"))
+
+
+def main():
+    text, is_error = call(json.loads(sys.argv[1]))
+    print(text)
+    if is_error:
         sys.exit(1)
 
 

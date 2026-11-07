@@ -18,7 +18,12 @@ for s in deploy/agents/skills/*; do
     rm -rf ~/.agents/skills/"$(basename "$s")"
     cp -r "$s" ~/.agents/skills/
 done
-cp deploy/agents/mcpcall.py ~/ttl/mcpcall.py
+cp deploy/agents/mcpcall.py deploy/agents/upload-config.py deploy/agents/esql.py ~/ttl/
+# Range configs as committed (placeholders, no secrets). upload-config.py
+# fills them from ~/.config/ttl/siem.env at upload.
+rm -rf ~/ttl/ranges
+cp -r deploy/ludus/ranges ~/ttl/ranges
+cp docs/ranges.md ~/ttl/ranges.md
 git rev-parse HEAD > ~/.agents/REVISION 2>/dev/null || cp REVISION ~/.agents/REVISION
 
 ln -sfn ~/.agents/AGENTS.md ~/.codex/AGENTS.md
