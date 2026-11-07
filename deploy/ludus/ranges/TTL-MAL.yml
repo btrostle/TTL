@@ -1,12 +1,21 @@
 # yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
 #
-# TTL-MAL: malware and app analysis. About 35 GB RAM.
-# VLAN 10 is the detonation network (victim, flare, remnux).
-# VLAN 20 holds the Elastic stack. Detonation hosts may reach only its
-# agent ports. After deploy, the victim and flare use remnux as their
-# gateway and DNS. See docs/ranges.md for the setup steps.
+# TTL-MAL: malware and app analysis. About 27 GB RAM.
+# VLAN 10 is the detonation network (victim, flare, remnux). The victim
+# sends telemetry to the shared Elastic on TTL-SIEM. After deploy, the
+# victim and flare use remnux as their gateway and DNS, with a route to
+# TTL-SIEM via the range router. See docs/ranges.md for the setup steps.
 # Detonate only in testing mode: internet blocked, victim and flare
 # snapshotted and reverted when testing ends.
+
+# Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
+# TTL-SIEM.yml). Replace both placeholders when uploading the config:
+# TTL_SIEM_WAN is TTL-SIEM's router address, 192.0.2.(100 + its range
+# number), and TTL_MAL_ENROLLMENT_TOKEN is the enrollment token of the
+# TTL-MAL agent policy. Never commit the real token.
+global_role_vars:
+  ludus_elastic_fleet_server: "https://TTL_SIEM_WAN:8220"
+  ludus_elastic_enrollment_token: "TTL_MAL_ENROLLMENT_TOKEN"
 
 router:
   vm_name: "{{ range_id }}-router-debian12-x64"
@@ -16,23 +25,9 @@ router:
   cpus: 2
 
 ludus:
-  - vm_name: "{{ range_id }}-elastic"
-    hostname: "{{ range_id }}-elastic"
-    template: debian-12-x64-server-template
-    vlan: 20
-    ip_last_octet: 2
-    ram_gb: 8
-    cpus: 4
-    linux: true
-    roles:
-      - badsectorlabs.ludus_elastic_container
-    testing:
-      snapshot: false
-      block_internet: true
-
   - vm_name: "{{ range_id }}-remnux"
     hostname: "{{ range_id }}-remnux"
-    template: ubuntu-24.04-x64-server-template
+    template: remnux-template
     vlan: 10
     ip_last_octet: 10
     ram_gb: 4
@@ -52,10 +47,7 @@ ludus:
     windows:
       sysprep: false
     roles:
-      - name: badsectorlabs.ludus_elastic_agent
-        depends_on:
-          - vm_name: "{{ range_id }}-elastic"
-            role: badsectorlabs.ludus_elastic_container
+      - badsectorlabs.ludus_elastic_agent
     testing:
       snapshot: true
       block_internet: true
@@ -81,25 +73,3 @@ network:
   always_blocked_networks:
     - 192.168.0.0/16
     - 172.16.0.0/12
-  rules:
-    - name: Detonation net to Elastic Kibana
-      vlan_src: 10
-      vlan_dst: 20
-      ip_last_octet_dst: 2
-      protocol: tcp
-      ports: 5601
-      action: ACCEPT
-    - name: Detonation net to Elastic Fleet
-      vlan_src: 10
-      vlan_dst: 20
-      ip_last_octet_dst: 2
-      protocol: tcp
-      ports: 8220
-      action: ACCEPT
-    - name: Detonation net to Elastic Elasticsearch
-      vlan_src: 10
-      vlan_dst: 20
-      ip_last_octet_dst: 2
-      protocol: tcp
-      ports: 9200
-      action: ACCEPT

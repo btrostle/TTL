@@ -11,12 +11,18 @@
 # Replies to connections the host or WireGuard clients open (Ansible,
 # WinRM, SSH into ranges) still pass.
 #
-# Uses its own table, so it does not touch Ludus's iptables (legacy)
+# Range routers on vmbr1000 can also reach each other directly at layer 2;
+# that traffic is bridged, never routed, so the inet table above never sees
+# it. The bridge table below drops it, except other ranges' routers to the
+# TTL-SIEM router ($siem_wan) on Fleet (8220) and Elasticsearch (9200).
+#
+# Uses its own tables, so it does not touch Ludus's iptables (legacy)
 # rules or a future Proxmox firewall. A drop in any base chain wins.
 #
 # Host-specific settings live in /etc/ttl-range-guard.local.nft (see
 # local.nft.example): $uplink is the bridge the host's default route uses,
-# the one Ludus MASQUERADEs 192.0.2.0/24 out of (`iptables-save -t nat`).
+# the one Ludus MASQUERADEs 192.0.2.0/24 out of (`iptables-save -t nat`);
+# $siem_wan is the TTL-SIEM router's address on vmbr1000.
 
 include "/etc/ttl-range-guard.local.nft"
 
@@ -61,5 +67,27 @@ table inet ttl_range_guard {
 		meta nfproto ipv6 jump blocked
 		ip daddr @blocked4 jump blocked
 		counter accept
+	}
+}
+
+table bridge ttl_range_bridge
+delete table bridge ttl_range_bridge
+
+# Frames between VMs on vmbr1000 (router to router, template VMs). Traffic
+# to or from the host itself uses the input/output hooks, not forward, so
+# DHCP, DNS, Ansible and WireGuard are unaffected.
+table bridge ttl_range_bridge {
+	chain blocked {
+		limit rate 10/minute log prefix "ttl-range-guard bridge drop: "
+		counter drop
+	}
+
+	chain forward {
+		type filter hook forward priority filter - 10; policy accept;
+		meta ibrname != "vmbr1000" accept
+		ether type arp accept
+		ip saddr 192.0.2.101-192.0.2.253 ip daddr $siem_wan tcp dport { 8220, 9200 } counter accept
+		ip saddr $siem_wan tcp sport { 8220, 9200 } ip daddr 192.0.2.101-192.0.2.253 counter accept
+		jump blocked
 	}
 }

@@ -3,3 +3,8 @@
 # route uses (the -o interface of Ludus's MASQUERADE rule in
 # `iptables-save -t nat`). Traffic from ranges may leave only through it.
 define uplink = "vmbr0"
+
+# TTL-SIEM's router on vmbr1000: 192.0.2.(100 + TTL-SIEM's range number).
+# Other ranges may reach it only on TCP 8220 and 9200. Before TTL-SIEM
+# exists, leave the unused placeholder below (no range has number 0).
+define siem_wan = 192.0.2.100

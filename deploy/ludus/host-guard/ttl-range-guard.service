@@ -11,6 +11,7 @@ RemainAfterExit=yes
 ExecStart=/usr/sbin/nft -f /etc/ttl-range-guard.nft
 ExecReload=/usr/sbin/nft -f /etc/ttl-range-guard.nft
 ExecStop=/usr/sbin/nft delete table inet ttl_range_guard
+ExecStop=-/usr/sbin/nft delete table bridge ttl_range_bridge
 
 [Install]
 WantedBy=sysinit.target

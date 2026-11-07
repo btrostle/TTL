@@ -33,14 +33,22 @@ Carry out authorized lab tasks inside the range. Outside it:
   routers and can upload configs, so layer 1 depends on you: never remove
   or narrow `always_blocked_networks`, never change a range router's
   firewall by hand, and never use `router.iptables_commands` or
-  `POST /testing/allow` for private addresses. If a range VM can reach a
-  private address outside `10.0.0.0/8`, stop and tell the owner.
+  `POST /testing/allow` for private addresses. The one exception is the
+  TTL-SIEM router's `iptables_commands`, which forward Fleet and
+  Elasticsearch to Elastic. Keep them exactly as in
+  `deploy/ludus/ranges/TTL-SIEM.yml`. If a range VM can reach a private
+  address outside `10.0.0.0/8`, or another range's router on anything
+  but TTL-SIEM's ports 8220 and 9200, stop and tell the owner.
+- TTL-SIEM holds the shared Elastic and the records of every run. Never
+  put it in testing mode, power it off, or delete it unless the owner says
+  so. Enrollment tokens and the TTL-SIEM Elastic password are secrets: fill them into a range config only
+  when uploading it, and never commit them.
 - The owner grants standing authorization to deploy, power on, or delete
   range VMs without further approval. The Proxmox host is short on memory
   and has frozen once from a full range build. Never start a deploy close
   to the nightly backup (02:00 host time).
-- Power the range off (`PUT /range/poweroff`) when you finish, unless the
-  owner says to leave it on.
+- Power the test range off (`PUT /range/poweroff`) when you finish, unless
+  the owner says to leave it on. TTL-SIEM stays on.
 
 ## Ludus through the broker
 

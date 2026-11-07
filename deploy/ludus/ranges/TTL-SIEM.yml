@@ -1,0 +1,54 @@
+# yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
+#
+# TTL-SIEM: shared lab infrastructure, always on. About 9 GB RAM.
+# Holds the one Elastic stack that every other range sends telemetry to,
+# so records from all tests survive range teardowns. Add other shared
+# infrastructure here. Never put this range in testing mode.
+#
+# Other ranges reach it only through this router's WAN address,
+# 192.0.2.(100 + this range's number), on TCP 8220 (Fleet) and 9200
+# (Elasticsearch). The router forwards those two ports to Elastic. The
+# Ludus host guard drops every other router-to-router connection. Kibana
+# (5601) is reachable only over WireGuard (ttl-agents). See docs/ranges.md.
+
+router:
+  vm_name: "{{ range_id }}-router-debian12-x64"
+  hostname: "{{ range_id }}-router"
+  template: debian-12-x64-server-template
+  ram_gb: 1
+  cpus: 2
+  # The one approved use of iptables_commands in the lab (see
+  # deploy/agents/AGENTS.md): forward Fleet and Elasticsearch from other
+  # ranges' routers (192.0.2.0/24) to Elastic. Nothing else.
+  iptables_commands:
+    - iptables -t nat -A PREROUTING -s 192.0.2.0/24 -p tcp -m multiport --dports 8220,9200 -j DNAT --to-destination 10.{{ range_second_octet }}.20.2
+    - iptables -I FORWARD -s 192.0.2.0/24 -d 10.{{ range_second_octet }}.20.2 -p tcp -m multiport --dports 8220,9200 -j ACCEPT
+
+ludus:
+  - vm_name: "{{ range_id }}-elastic"
+    hostname: "{{ range_id }}-elastic"
+    template: debian-12-x64-server-template
+    vlan: 20
+    ip_last_octet: 2
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    roles:
+      - badsectorlabs.ludus_elastic_container
+    role_vars:
+      # Port 9200 is reachable from every test range, so the role's default
+      # superuser password (elasticpassword) would let a sample read or
+      # delete every run's records. Replace this placeholder with a strong
+      # password when uploading the config; keep it on ttl-agents only.
+      ludus_elastic_password: "TTL_SIEM_ELASTIC_PASSWORD"
+    testing:
+      snapshot: false # never revert the records
+      block_internet: false
+
+network:
+  # Layer 1 of 2: the range router never forwards to private networks
+  # outside the range. Layer 2 is a firewall on the Ludus host that agents
+  # cannot change. Keep this block; see docs/ranges.md.
+  always_blocked_networks:
+    - 192.168.0.0/16
+    - 172.16.0.0/12
