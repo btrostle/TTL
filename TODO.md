@@ -19,3 +19,10 @@
     against the 45 GB range cap.
   - BadBlood: fill AD with realistic users, groups, OUs, and ACLs on the AD
     ranges.
+- One-step lab deploy, after the build-out: turn the owner-only build log
+  (kept outside the repo) into scripts plus a short runbook, so the Ludus
+  host guard, broker, agents box, TTL-SIEM and each test range can be stood
+  up again with as few manual steps as possible. The steps that stay
+  manual today: installing the host guard and setting `siem_wan`, the
+  broker allowlist, `ludus range assign` for each new range, and the
+  Fleet setup on TTL-SIEM.

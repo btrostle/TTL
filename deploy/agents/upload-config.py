@@ -57,18 +57,25 @@ def main():
 
     out, err = call({"method": "PUT", "path": "/range/config", "query": {"rangeID": range_id},
                      "body": {"force": "false"}, "file_text": text})
-    if err:
+    try:
+        status = int(json.loads(out).get("status", 200))
+    except (TypeError, ValueError, AttributeError):
+        status = 200
+    if err or status >= 300:
         # Ludus echoes errors, not the config, but scrub values anyway.
         for n in names:
             out = out.replace(env[n], n)
         sys.exit("Upload failed: " + out)
 
     live, err = call({"method": "GET", "path": "/range/config", "query": {"rangeID": range_id}})
-    try:
-        data = json.loads(live)
-        live = data.get("result", live) if isinstance(data, dict) else live
-    except ValueError:
-        pass
+    # The broker returns {"status", "body"}; Ludus's body is {"result": "<yaml>"}.
+    for key in ("body", "result"):
+        try:
+            data = json.loads(live)
+        except (TypeError, ValueError):
+            break
+        if isinstance(data, dict) and isinstance(data.get(key), str):
+            live = data[key]
     same = isinstance(live, str) and live.strip() == text.strip()
     print(f"Uploaded {range_id} ({len(names)} placeholders filled). "
           f"Live config {'matches' if same else 'DIFFERS from'} the filled file.")

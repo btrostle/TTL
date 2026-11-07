@@ -125,8 +125,11 @@ healthy under the range's policy.
   - `TTL-AD`: `win2019-server-x64-template`, `win2016-server-x64-template`,
     `kali-x64-desktop-template`
 
-After that, agents create the range (`POST /ranges/create`), upload the
-config, and deploy through the broker. TTL-SIEM comes first.
+After that, agents create the range (`POST /ranges/create`). The owner
+then assigns the broker's Ludus user to it
+(`ludus range assign <broker user> <range>`), which the broker blocks
+agents from doing. Then agents upload the config and deploy through the
+broker. TTL-SIEM comes first.
 
 Elastic Defend runs in **detect** mode, not prevent. The Elastic role sets
 this; check it in Kibana > Fleet after changing any policy.

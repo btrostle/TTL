@@ -34,6 +34,12 @@ Inside the lab, agents may carry out assigned security tests.
   Agents are approved to fetch, use, print, and store them. The TTL-SIEM
   Elastic password and enrollment tokens are secrets: they live only in
   `~/.config/ttl/siem.env` on ttl-agents (see `docs/ranges.md`).
+- Record every command you run (or ask the owner to run) to build or change
+  the lab outside the repo's scripts in `private/build-log.md`: where it
+  ran, the command, and why, plus any gotcha. Never record secret values;
+  note how they were generated or where they're stored. Once the lab is
+  built out, this log is the basis for consolidating the whole build into
+  a simple, repeatable deploy. Prefer steps that can be scripted.
 - This repository is public. Do not commit home network details (subnets,
   host IPs, firewall rules, known gaps). Put them in `private/`, which is
   gitignored. Lab notes for the owner are in `private/network-context.md`.
