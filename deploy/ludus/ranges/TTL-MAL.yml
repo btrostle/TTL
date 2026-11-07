@@ -3,7 +3,7 @@
 # TTL-MAL: malware analysis, following OALabs' two-VM setup. About 17 GB RAM.
 # - static (VLAN 120): Windows 11 with the analysis tools and internet.
 #   Samples are stored here but never run.
-# - dynamic (VLAN 110): Windows 11 with the same tools plus debugging and
+# - dynamic (VLAN 190): Windows 11 with the same tools plus debugging and
 #   monitoring tools, and Elastic Agent. Samples run here, only in testing
 #   mode: entering it snapshots dynamic and cuts its internet (static keeps
 #   internet), leaving it reverts dynamic.
@@ -48,7 +48,7 @@ ludus:
   - vm_name: "{{ range_id }}-dynamic"
     hostname: "{{ range_id }}-dynamic"
     template: win11-22h2-x64-enterprise-template
-    vlan: 110
+    vlan: 190
     ip_last_octet: 21
     ram_gb: 8
     cpus: 4
@@ -74,14 +74,14 @@ network:
     # dynamic is clean, before a sample runs (docs/ranges.md).
     - name: "WireGuard to dynamic: RDP and WinRM only"
       vlan_src: wireguard
-      vlan_dst: 110
+      vlan_dst: 190
       ip_last_octet_dst: 21
       protocol: tcp
       ports: 3389,5985,5986
       action: ACCEPT
     - name: "WireGuard to dynamic: nothing else"
       vlan_src: wireguard
-      vlan_dst: 110
+      vlan_dst: 190
       ip_last_octet_dst: 21
       protocol: all
       ports: all

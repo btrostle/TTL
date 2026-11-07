@@ -9,14 +9,14 @@ prebuilt SIEM rules), so records from every test survive range teardowns.
 | Range | Config | Purpose | VLANs | RAM |
 |---|---|---|---|---|
 | `TTL-SIEM` | `deploy/ludus/ranges/TTL-SIEM.yml` | Shared Elastic and future shared infrastructure; always on | 100 | 9 GB |
-| `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware analysis | 110 dynamic, 120 static | 17 GB |
+| `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware analysis | 120 static, 190 dynamic | 17 GB |
 | `TTL-WKS` | `deploy/ludus/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 130, kali 139 | 27 GB |
 | `TTL-AD` | `deploy/ludus/ranges/TTL-AD.yml` | Full GOAD | 140, kali 149 | 29 GB |
 
-Each range has its own block of VLANs (100s, in tens), so an address
-like `10.S.130.x` tells you the range at a glance. Never use 10 or 20:
-those are the home network's VLANs. A new range takes the next free
-block.
+Every VLAN number is used by one range only, so an address like
+`10.S.130.x` tells you the range at a glance. TTL-MAL's dynamic VM, where
+malware runs, is alone on 190. Never use 10 or 20: those are the home
+network's VLANs. A new range takes the next free block of ten in the 100s.
 
 ## Home network isolation (all ranges)
 
@@ -188,7 +188,7 @@ Follows OALabs' two-VM setup, plus Elastic on the dynamic VM.
 | VM | VLAN.IP | Network | Role |
 |---|---|---|---|
 | static | 120.20 | Internet, always | Analysis tools, WSL, notes. Samples are stored but never run |
-| dynamic | 110.21 | None while testing (Elastic only) | Same tools plus x64dbg, Procmon, System Informer, and Elastic Agent. Samples run here |
+| dynamic | 190.21 | None while testing (Elastic only) | Same tools plus x64dbg, Procmon, System Informer, and Elastic Agent. Samples run here |
 
 Both VMs get their tools from our role `ttl_re_tools`
 (`ttl_re_tools_profile: static` or `dynamic`).
