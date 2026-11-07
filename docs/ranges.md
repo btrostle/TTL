@@ -145,6 +145,11 @@ here, so a rebuild can repeat it.
 - Templates the owner builds must be moved to the Proxmox `SHARED` pool
   before the broker's user can see them.
 - Host: the range guard (`deploy/ludus/host-guard/`).
+- Network rules with `vlan_src: wireguard`: Ludus inserts each one at the
+  top of the router's chain, so they apply in reverse order of the
+  config. A catch-all DROP must come before the ACCEPTs it makes
+  exceptions for (TTL-MAL). It is needed at all because each WireGuard
+  user's access grant accepts every port into the range.
 
 ### Deploying a test range
 
@@ -200,8 +205,9 @@ can't change it):
 - Out: nothing to WireGuard clients (Ludus default, stated in the
   config), nothing to static (the VLANs reject each other), no internet in
   testing mode, and TTL-SIEM's Fleet and Elasticsearch ports only.
-- Files go in over WinRM (`evil-winrm` `upload`, or PowerShell
-  `Copy-Item -ToSession`), and only while dynamic is clean, before a
+- Files go in over WinRM on 5986 (HTTPS; Windows doesn't listen on
+  5985) with `localuser`: `evil-winrm -S` `upload`, or PowerShell
+  `Copy-Item -ToSession`. Only while dynamic is clean, before a
   sample runs. The network can't tell clean from dirty; this rule can.
 - RDP to dynamic with drive and clipboard redirection off, so a running
   sample can't reach your files or clipboard.
@@ -215,9 +221,11 @@ has internet for setup and updates only.
 ### After deploy (internet still on)
 
 1. Both: check the "Report anything that did not install" task in the
-   deploy log.
+   deploy log (through `grep`; the broker cuts the log off at 200 KB, so
+   dynamic's line may be missing: check on the VM instead).
 2. Both, by hand (owner): install IDA Free and Binary Ninja Free with your
-   own downloads. On static, the WSL distro: `wsl --set-default-version 1`,
+   own downloads. pestudio too, if Chocolatey reported it: its package
+   fails its checksum whenever the vendor updates the download. On static, the WSL distro: `wsl --set-default-version 1`,
    `wsl --install -d Ubuntu-24.04`, then in Ubuntu
    `sudo apt install vim gcc make mingw-w64`.
 3. Check in Fleet that dynamic is healthy under the `TTL-MAL` policy.
@@ -226,10 +234,12 @@ has internet for setup and updates only.
 
 1. Static: download the sample (password-protected zip) into
    `C:\samples` and do the static analysis. Never run it here.
-2. Enter testing mode (dynamic is snapshotted, so it is clean). Allow
-   TTL-SIEM through it (`POST /testing/allow` with `192.0.2.(100+S)`) if
-   Elastic stops receiving events. From dynamic, check: no internet,
-   TTL-SIEM still receives events. Stop if a check fails.
+2. Enter testing mode (dynamic is snapshotted, so it is clean), then
+   allow TTL-SIEM through it: `POST /testing/allow` with
+   `{"ips": ["192.0.2.(100+S)"]}`. Testing mode blocks Elastic too, and
+   leaving it clears the allow, so do this every session. Only 8220 and
+   9200 answer at that address. From dynamic, check: no internet, Fleet
+   reachable, TTL-SIEM still receives events. Stop if a check fails.
 3. Copy the sample to dynamic over WinRM, into `C:\samples`. This is the
    last transfer of the session.
 4. Dynamic: run and debug it with x64dbg, Procmon and System Informer.

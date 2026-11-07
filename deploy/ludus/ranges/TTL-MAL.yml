@@ -72,13 +72,9 @@ network:
     # From WireGuard, dynamic accepts only the GUI (RDP) and tool commands
     # and file transfers (WinRM). No SMB. Transfers happen only while
     # dynamic is clean, before a sample runs (docs/ranges.md).
-    - name: "WireGuard to dynamic: RDP and WinRM only"
-      vlan_src: wireguard
-      vlan_dst: 190
-      ip_last_octet_dst: 21
-      protocol: tcp
-      ports: 3389,5985,5986
-      action: ACCEPT
+    # Ludus inserts each WireGuard rule at the top of the router's chain,
+    # so they apply in REVERSE order: keep the DROP above the ACCEPT here.
+    # Without the DROP, the per-user WireGuard access grants allow every port.
     - name: "WireGuard to dynamic: nothing else"
       vlan_src: wireguard
       vlan_dst: 190
@@ -86,6 +82,13 @@ network:
       protocol: all
       ports: all
       action: DROP
+    - name: "WireGuard to dynamic: RDP and WinRM only"
+      vlan_src: wireguard
+      vlan_dst: 190
+      ip_last_octet_dst: 21
+      protocol: tcp
+      ports: 3389,5985,5986
+      action: ACCEPT
   # Layer 1 of 2: the range router never forwards to private networks
   # outside the range. Layer 2 is a firewall on the Ludus host that agents
   # cannot change. Keep this block; see docs/ranges.md.
