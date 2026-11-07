@@ -43,9 +43,13 @@ Carry out authorized lab tasks inside the range. Outside it:
   put it in testing mode, power it off, or delete it unless the owner says
   so. Enrollment tokens and the TTL-SIEM Elastic password are secrets. They
   live in `~/.config/ttl/siem.env`. Use them through
-  `~/ttl/upload-config.py` and `~/ttl/esql.py`, or as `$VARIABLES` after
+  `~/ttl/upload-config.py`, `~/ttl/esql.py` and
+  `~/ttl/siem-fleet-setup.py`, or as `$VARIABLES` after
   sourcing the file (for example in Kibana API calls). Never print,
-  commit, or record their values.
+  commit, or record their values. Range deploy logs (`GET /range/logs`
+  and its history) contain the filled values, so never print or save a
+  log whole: pipe it through `grep` for `fatal:`, `ERROR!`, `failed=` and
+  the `PLAY RECAP`, and check that a matched line holds no value.
 - The owner grants standing authorization to deploy, power on, or delete
   range VMs without further approval. The Proxmox host is short on memory
   and has frozen once from a full range build. Never start a deploy close

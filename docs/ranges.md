@@ -85,22 +85,52 @@ it, for example
 
 The `ludus_elastic_container` role registers Fleet and the Elasticsearch
 output at `10.S.20.2`, and agents switch to those URLs after enrolling.
-Other ranges cannot route there, so add the WAN addresses in Kibana
-(Fleet API from ttl-agents):
+Other ranges cannot route there. From ttl-agents, run:
 
-1. Add a Fleet Server host `ttl-siem-wan`: `https://192.0.2.(100+S):8220`.
-2. Add an Elasticsearch output `ttl-siem-wan`:
-   `https://192.0.2.(100+S):9200`, with `ssl.verification_mode: none` in
-   its advanced YAML (the certificates are self-signed for `10.S.20.2`).
-3. Copy the role's `Ludus-Agent-Policy` (it already has Elastic Defend in
-   detect mode and the Windows integration) once per test range:
-   `TTL-MAL`, `TTL-WKS`, `TTL-AD`, with namespaces `ttl_mal`, `ttl_wks`,
-   `ttl_ad`. Set each copy's Fleet Server host and output to
-   `ttl-siem-wan`.
-4. Create an enrollment token for each copy and add it to `siem.env`. Add
-   `TTL_SIEM_WAN` and `TTL_SIEM_ES` too.
-5. The owner sets `siem_wan` in the host guard to `192.0.2.(100+S)` and
-   reloads it (see `deploy/ludus/host-guard/`).
+```sh
+python3 ~/ttl/siem-fleet-setup.py
+```
+
+It is safe to re-run, and after any TTL-SIEM rebuild it must be. It:
+
+1. adds Fleet Server host and Elasticsearch output `ttl-siem-wan`
+   (`https://192.0.2.(100+S):8220` and `:9200`, certificate checks off
+   because the certificates are self-signed for `10.S.20.2`) and makes
+   both the defaults. Elastic's Basic licence has no per-policy outputs,
+   so every agent, including Elastic's own Fleet Server, uses the WAN
+   address; the router's hairpin rules bring Elastic's own traffic back;
+2. copies the role's `Ludus-Agent-Policy` (Elastic Defend in detect mode,
+   the Windows and System integrations) once per test range: `TTL-MAL`,
+   `TTL-WKS`, `TTL-AD`, with namespaces `ttl_mal`, `ttl_wks`, `ttl_ad` on
+   the policy and every integration;
+3. writes each policy's enrollment token to `siem.env`.
+
+The owner also sets `siem_wan` in the host guard to `192.0.2.(100+S)` and
+reloads it (see `deploy/ludus/host-guard/`), and assigns TTL-SIEM to both
+Ludus users (see Owner setup).
+
+### Changes from the Ludus defaults
+
+Anything changed from what Ludus or its roles set up by default is listed
+here, so a rebuild can repeat it.
+
+- TTL-SIEM's router: `iptables_commands` forwarding 8220/9200 from
+  other ranges, plus the hairpin for Elastic itself (`TTL-SIEM.yml`).
+- Elastic superuser password: a generated one instead of the role's
+  `elasticpassword` (`TTL_SIEM_ELASTIC_PASSWORD` in `siem.env`). If it is
+  ever changed in Elasticsearch directly, re-upload the TTL-SIEM config
+  so Ludus holds the same value.
+- Fleet: default Fleet Server host `ttl-siem-wan` (WAN address); the
+  preconfigured default output's address changed in
+  `/opt/elastic_container/kibana.yml` on the Elastic VM (Kibana refuses
+  API changes to it), which a redeploy of that VM overwrites; per-range copies of `Ludus-Agent-Policy` with their own namespaces
+  (`siem-fleet-setup.py`, which also checks their Elastic Defend settings
+  match the source). `Ludus-Agent-Policy` itself is left as is and unused.
+- Ludus appends `iptables_commands` again on every router deploy without
+  removing the old ones, so rules pile up as duplicates. Harmless.
+- Test ranges: no Elastic VM; `ludus_elastic_agent` points at TTL-SIEM
+  through `global_role_vars`.
+- Host: the range guard (`deploy/ludus/host-guard/`).
 
 ### Deploying a test range
 
@@ -126,9 +156,12 @@ healthy under the range's policy.
     `kali-x64-desktop-template`
 
 After that, agents create the range (`POST /ranges/create`). The owner
-then assigns the broker's Ludus user to it
-(`ludus range assign <broker user> <range>`), which the broker blocks
-agents from doing. Then agents upload the config and deploy through the
+then assigns it to both Ludus users, which the broker blocks agents from
+doing: the broker's user (`ludus range assign <broker user> <range>`) and
+ttl-agents' WireGuard user (`ludus range assign <tunnel user> <range>`).
+The owner or a coding agent (as root on ttl-agents) also adds the range's
+`10.S.0.0/16` to `AllowedIPs` in ttl-agents' WireGuard config and restarts
+it. Then agents upload the config and deploy through the
 broker. TTL-SIEM comes first.
 
 Elastic Defend runs in **detect** mode, not prevent. The Elastic role sets

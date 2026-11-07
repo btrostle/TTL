@@ -15,7 +15,8 @@ and the doc link, and do not try to do it another way.
 1. Get the exact error text.
 2. Range state: `GET /range` with `rangeID=<range>`. Note
    `rangeState`, `testingEnabled`, and each VM's power state.
-3. Errors: `GET /range/logs`. Search for `fatal:` and `ERROR!`, skipping
+3. Errors: `GET /range/logs`, through `grep` only, because it holds the
+   filled secrets (see the agent rules). Search for `fatal:` and `ERROR!`, skipping
    lines followed by `...ignoring`. Read the `PLAY RECAP`. For older runs use
    `GET /range/logs/history` and `GET /range/logs/history/{logID}`.
 4. Match the error to `references/common-errors.md`. The `ludus-deploy` skill

@@ -32,7 +32,8 @@ it holds every run's records.
    `localhost` matches nothing.
 5. Poll `GET /range` every 30 seconds until `rangeState` is no longer
    `DEPLOYING` or `WAITING`.
-6. Read `GET /range/logs`. Look for `fatal:` and `ERROR!` lines, skipping
+6. Read `GET /range/logs` through `grep` only: it holds the filled secrets
+   (see the agent rules). Look for `fatal:` and `ERROR!` lines, skipping
    ones followed by `...ignoring`, and read the `PLAY RECAP`. Older runs:
    `GET /range/logs/history`, then `GET /range/logs/history/{logID}`.
 7. Check the result: every VM on its static IP. For a test range, every

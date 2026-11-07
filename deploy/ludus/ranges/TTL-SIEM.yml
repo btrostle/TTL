@@ -20,9 +20,15 @@ router:
   # The one approved use of iptables_commands in the lab (see
   # deploy/agents/AGENTS.md): forward Fleet and Elasticsearch from other
   # ranges' routers (192.0.2.0/24) to Elastic. Nothing else.
+  # The last three are a hairpin for Elastic itself: Fleet's default output
+  # is this router's WAN address (Basic has no per-policy outputs), so
+  # Elastic's own Fleet Server must reach itself through it too.
   iptables_commands:
     - iptables -t nat -A PREROUTING -s 192.0.2.0/24 -p tcp -m multiport --dports 8220,9200 -j DNAT --to-destination 10.{{ range_second_octet }}.20.2
     - iptables -I FORWARD -s 192.0.2.0/24 -d 10.{{ range_second_octet }}.20.2 -p tcp -m multiport --dports 8220,9200 -j ACCEPT
+    - iptables -t nat -I PREROUTING -s 10.{{ range_second_octet }}.20.2 -d 192.0.2.0/24 -p tcp -m multiport --dports 8220,9200 -j DNAT --to-destination 10.{{ range_second_octet }}.20.2
+    - iptables -t nat -I POSTROUTING -s 10.{{ range_second_octet }}.20.2 -d 10.{{ range_second_octet }}.20.2 -p tcp -m multiport --dports 8220,9200 -j MASQUERADE
+    - iptables -I FORWARD -s 10.{{ range_second_octet }}.20.2 -d 10.{{ range_second_octet }}.20.2 -p tcp -m multiport --dports 8220,9200 -j ACCEPT
 
 ludus:
   - vm_name: "{{ range_id }}-elastic"
