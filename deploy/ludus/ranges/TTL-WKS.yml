@@ -43,6 +43,7 @@ ludus:
       fqdn: ttl.lab
       role: primary-dc
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-WS01"
@@ -58,6 +59,7 @@ ludus:
       fqdn: ttl.lab
       role: member
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-WS02"
@@ -73,6 +75,7 @@ ludus:
       fqdn: ttl.lab
       role: member
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-linux"

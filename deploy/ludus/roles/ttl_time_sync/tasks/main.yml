@@ -1,0 +1,41 @@
+---
+# Windows VMs boot with Proxmox's host-local clock and may not sync for
+# hours. This points w32time at NTP (or at the domain), polls often, accepts
+# any size of correction, and syncs now while the range has internet.
+# ~/ttl/timesync.py on ttl-agents fixes clocks later without internet.
+
+- name: Configure and sync Windows Time
+  ansible.windows.win_powershell:
+    script: |
+      $ErrorActionPreference = 'Stop'
+      # 0/2 standalone, 1/3 domain member, 4 backup DC, 5 PDC emulator
+      $role = (Get-CimInstance Win32_ComputerSystem).DomainRole
+      $cfg = 'HKLM:\SYSTEM\CurrentControlSet\Services\W32Time'
+      if ($role -in 1, 3, 4) {
+        w32tm /config /syncfromflags:domhier /update | Out-Null
+        $source = 'domain'
+      } else {
+        $peers = '{{ ttl_time_sync_peers | map("regex_replace", "$", ",0x8") | join(" ") }}'
+        $reliable = if ($role -eq 5) { 'yes' } else { 'no' }
+        w32tm /config /manualpeerlist:"$peers" /syncfromflags:manual /reliable:$reliable /update | Out-Null
+        Set-ItemProperty "$cfg\TimeProviders\NtpClient" SpecialPollInterval {{ ttl_time_sync_poll_seconds }} -Type DWord
+        $source = $peers
+      }
+      # Allow corrections of any size (the default refuses hours-off clocks
+      # on some editions).
+      Set-ItemProperty "$cfg\Config" MaxPosPhaseCorrection 0xFFFFFFFF -Type DWord
+      Set-ItemProperty "$cfg\Config" MaxNegPhaseCorrection 0xFFFFFFFF -Type DWord
+      Set-Service w32time -StartupType Automatic
+      Restart-Service w32time
+      Start-Sleep -Seconds 2
+      $sync = (w32tm /resync /force) -join ' '
+      $Ansible.Result = @{ source = $source; resync = $sync; utc = [DateTime]::UtcNow.ToString('u') }
+  register: ttl_time_sync_result
+
+- name: Report the clock
+  ansible.builtin.debug:
+    msg: >-
+      Time source {{ ttl_time_sync_result.result.source }};
+      resync: {{ ttl_time_sync_result.result.resync }};
+      VM UTC {{ ttl_time_sync_result.result.utc }}
+      (controller UTC {{ now(utc=true).strftime('%Y-%m-%d %H:%M:%SZ') }}).

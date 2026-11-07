@@ -18,7 +18,7 @@ for s in deploy/agents/skills/*; do
     rm -rf ~/.agents/skills/"$(basename "$s")"
     cp -r "$s" ~/.agents/skills/
 done
-cp deploy/agents/mcpcall.py deploy/agents/upload-config.py deploy/agents/esql.py deploy/agents/siem-fleet-setup.py ~/ttl/
+cp deploy/agents/mcpcall.py deploy/agents/upload-config.py deploy/agents/esql.py deploy/agents/siem-fleet-setup.py deploy/agents/timesync.py ~/ttl/
 # Range configs as committed (placeholders, no secrets). upload-config.py
 # fills them from ~/.config/ttl/siem.env at upload.
 rm -rf ~/ttl/ranges

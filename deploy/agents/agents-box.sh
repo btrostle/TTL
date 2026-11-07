@@ -11,7 +11,7 @@ set -eu
 ludus_host=198.51.100.1
 
 apt-get update -qq
-DEBIAN_FRONTEND=noninteractive apt-get install -y -qq wireguard-tools nftables >/dev/null
+DEBIAN_FRONTEND=noninteractive apt-get install -y -qq wireguard-tools nftables python3-winrm python3-yaml >/dev/null
 
 # Tunnel: root-only config, without the route to the Ludus host.
 if [ -f /root/ludus-wg.conf ]; then

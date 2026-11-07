@@ -45,6 +45,7 @@ ludus:
     windows:
       sysprep: false
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - ttl_re_tools
     role_vars:
       ttl_re_tools_profile: static
@@ -62,6 +63,7 @@ ludus:
     windows:
       sysprep: false
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
       - ttl_re_tools
     role_vars:

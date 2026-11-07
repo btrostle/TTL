@@ -94,6 +94,10 @@ runs at a time, under a 45 GB RAM soft cap. TTL-SIEM runs alongside it.
   It fills the placeholders (`TTL_SIEM_WAN`, `TTL_SIEM_ELASTIC_PASSWORD`,
   `TTL_<RANGE>_ENROLLMENT_TOKEN`) from `~/.config/ttl/siem.env` and never
   prints them. `--check` lists which ones are set.
+- Windows clocks: `python3 ~/ttl/timesync.py <range> --check` reports each
+  Windows VM's offset from ttl-agents; without `--check` it sets any VM
+  more than 2 s off. It works without internet on the VM (testing mode).
+  Run it before a test so Elastic timestamps line up.
 
 ## Elastic (TTL-SIEM)
 

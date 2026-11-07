@@ -1,0 +1,11 @@
+---
+# NTP servers for VMs that aren't domain members, and for each forest's
+# PDC emulator. Domain members follow their domain's hierarchy instead, so
+# Kerberos stays consistent.
+ttl_time_sync_peers:
+  - time.cloudflare.com
+  - pool.ntp.org
+
+# How often w32time checks its source, in seconds. Windows' default for a
+# workgroup machine is a week.
+ttl_time_sync_poll_seconds: 900

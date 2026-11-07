@@ -43,6 +43,7 @@ ludus:
     windows:
       sysprep: true
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-GOAD-DC02" # winterfell, north.sevenkingdoms.local
@@ -55,6 +56,7 @@ ludus:
     windows:
       sysprep: true
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-GOAD-DC03" # meereen, essos.local
@@ -67,6 +69,7 @@ ludus:
     windows:
       sysprep: true
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-GOAD-SRV02" # castelblack, north
@@ -79,6 +82,7 @@ ludus:
     windows:
       sysprep: true
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-GOAD-SRV03" # braavos, essos
@@ -91,6 +95,7 @@ ludus:
     windows:
       sysprep: true
     roles:
+      - ttl_time_sync # clock from NTP or the domain
       - badsectorlabs.ludus_elastic_agent
 
   - vm_name: "{{ range_id }}-kali"

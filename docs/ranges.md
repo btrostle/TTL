@@ -149,6 +149,12 @@ here, so a rebuild can repeat it.
   it installs far more than needed. (Edits made while trying it, the build
   VM's RAM and the `ludus_flarevm` role's retry count, are left on the
   host unused.)
+- Every Windows VM gets our role `deploy/ludus/roles/ttl_time_sync`
+  (installed globally like `ttl_re_tools`). Windows boots with Proxmox's
+  host-local clock and can go hours before syncing; the role points
+  w32time at NTP (domain members: at their domain), polls every 15
+  minutes, and syncs during deploy. Without internet (testing mode),
+  `~/ttl/timesync.py <range>` on ttl-agents sets the clocks over WinRM.
 - Templates the owner builds must be moved to the Proxmox `SHARED` pool
   before the broker's user can see them.
 - Host: the range guard (`deploy/ludus/host-guard/`).
@@ -249,6 +255,8 @@ has internet for setup and updates only.
    leaving it clears the allow, so do this every session. Only 8220 and
    9200 answer at that address. From dynamic, check: no internet, Fleet
    reachable, TTL-SIEM still receives events. Stop if a check fails.
+   Then `python3 ~/ttl/timesync.py TTL-MAL dynamic`: the revert from the
+   last session can leave dynamic's clock behind, and it has no NTP now.
 3. Copy the sample to dynamic over WinRM, into `C:\samples`. This is the
    last transfer of the session.
 4. Dynamic: run and debug it with x64dbg, Procmon and System Informer.
