@@ -80,7 +80,14 @@ TTL_SIEM_ES=https://10.S.100.2:9200
 TTL_MAL_ENROLLMENT_TOKEN=...
 TTL_WKS_ENROLLMENT_TOKEN=...
 TTL_AD_ENROLLMENT_TOKEN=...
+TTL_TIMEZONE=Region/City        # the Proxmox host's time zone (Windows ranges)
 ```
+
+`TTL_TIMEZONE` isn't a secret, just kept out of the public repo. It must
+match the Proxmox host's zone: Proxmox gives Windows VMs a clock in host
+local time, and Windows reads it in this zone. A mismatch puts Windows
+clocks, and their Elastic timestamps, hours off. Check after a deploy:
+`(Get-Date).ToUniversalTime()` on a Windows VM against real UTC.
 
 Before TTL-SIEM's first deploy, generate the password without printing
 it, for example
@@ -145,6 +152,8 @@ here, so a rebuild can repeat it.
 - Templates the owner builds must be moved to the Proxmox `SHARED` pool
   before the broker's user can see them.
 - Host: the range guard (`deploy/ludus/host-guard/`).
+- Windows ranges set `defaults.timezone` to the Proxmox host's zone
+  (`TTL_TIMEZONE`) instead of Ludus's default, America/New_York.
 - Network rules with `vlan_src: wireguard`: Ludus inserts each one at the
   top of the router's chain, so they apply in reverse order of the
   config. A catch-all DROP must come before the ACCEPTs it makes

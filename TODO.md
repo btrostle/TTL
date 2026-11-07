@@ -26,10 +26,3 @@
   manual today: installing the host guard and setting `siem_wan`, the
   broker allowlist, `ludus range assign` for each new range, and the
   Fleet setup on TTL-SIEM.
-- Windows VM clocks run hours off real UTC: Proxmox gives Windows a
-  local-time clock in the host's time zone, Windows reads it in the range's
-  `defaults.timezone` (Ludus default: Eastern), and nothing corrects it.
-  Elastic events from Windows VMs are stamped wrong, so time-window queries
-  miss them. Fix: set `defaults.timezone` in every Windows range to the
-  Proxmox host's zone, redeploy, and check `(Get-Date).ToUniversalTime()`
-  against real UTC.

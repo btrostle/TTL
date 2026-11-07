@@ -9,6 +9,13 @@
 # Do not use goad.sh -p ludus: it calls the Ludus API with its own key.
 # See docs/ranges.md.
 
+# Windows reads the Proxmox host's clock as local time in this zone, so it
+# must be the host's zone or Windows clocks (and Elastic timestamps) are
+# hours off. TTL_TIMEZONE (a tz name such as Region/City) is filled from
+# siem.env at upload, so the owner's zone stays out of this public repo.
+defaults:
+  timezone: "TTL_TIMEZONE"
+
 # Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
 # TTL-SIEM.yml). Replace both placeholders when uploading the config:
 # TTL_SIEM_WAN is TTL-SIEM's router address, 192.0.2.(100 + its range
