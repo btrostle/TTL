@@ -267,6 +267,8 @@ has internet for setup and updates only.
    notes into the run folder. Read tool output on screen or through WinRM
    commands; don't copy files off dynamic.
 6. Leave testing mode. Dynamic reverts; the events stay in TTL-SIEM.
+   Reverting a snapshot with RAM leaves the clock behind by the time since
+   the snapshot: run `python3 ~/ttl/timesync.py TTL-MAL dynamic`.
 
 ## TTL-WKS: basic AD
 
