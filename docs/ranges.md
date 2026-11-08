@@ -145,7 +145,9 @@ here, so a rebuild can repeat it.
 - TTL-MAL's static and dynamic VMs get their tools from our own role,
   `deploy/ludus/roles/ttl_re_tools`, installed globally by the owner
   (`ludus ansible role add -d <path to the role>`, as an admin, then make
-  it global). FLARE-VM was dropped: its template build kept failing, and
+  it global: `--global` on `add`, or `ludus ansible role scope global
+  <role>`, whichever `--help` lists; the broker's user sees it in
+  `GET /ansible` with `global: True`). FLARE-VM was dropped: its template build kept failing, and
   it installs far more than needed. (Edits made while trying it, the build
   VM's RAM and the `ludus_flarevm` role's retry count, are left on the
   host unused.)
