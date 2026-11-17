@@ -1,6 +1,6 @@
 # Ranges
 
-Three test ranges, each built for one kind of attack telemetry, plus
+Four test ranges, each built for one kind of attack telemetry, plus
 `TTL-SIEM`, which is always on. Only one test range runs at a time, and each
 must stay under the 45 GB RAM soft cap. All of them send telemetry to the one
 Elastic stack on TTL-SIEM (Elastic Defend in detect mode, Basic license,
@@ -12,6 +12,7 @@ prebuilt SIEM rules), so records from every test survive range teardowns.
 | `TTL-MAL` | `deploy/ludus/ranges/TTL-MAL.yml` | Malware analysis | 120 static, 190 dynamic | 17 GB |
 | `TTL-WKS` | `deploy/ludus/ranges/TTL-WKS.yml` | Basic AD, workstation attacks | 130, kali 139 | 27 GB |
 | `TTL-AD` | `deploy/ludus/ranges/TTL-AD.yml` | Full GOAD | 140, kali 149 | 29 GB |
+| `TTL-WEB` | `deploy/ludus/ranges/TTL-WEB.yml` | Web app attacks by an LLM pentest agent (ARTEX) | 150, atk 159 | 25 GB |
 
 Every VLAN number is used by one range only, so an address like
 `10.S.130.x` tells you the range at a glance. TTL-MAL's dynamic VM, where
@@ -80,6 +81,7 @@ TTL_SIEM_ES=https://10.S.100.2:9200
 TTL_MAL_ENROLLMENT_TOKEN=...
 TTL_WKS_ENROLLMENT_TOKEN=...
 TTL_AD_ENROLLMENT_TOKEN=...
+TTL_WEB_ENROLLMENT_TOKEN=...
 TTL_TIMEZONE=Region/City        # the Proxmox host's time zone (Windows ranges)
 ```
 
@@ -113,8 +115,8 @@ It is safe to re-run, and after any TTL-SIEM rebuild it must be. It:
    address; the router's hairpin rules bring Elastic's own traffic back;
 2. copies the role's `Ludus-Agent-Policy` (Elastic Defend in detect mode,
    the Windows and System integrations) once per test range: `TTL-MAL`,
-   `TTL-WKS`, `TTL-AD`, with namespaces `ttl_mal`, `ttl_wks`, `ttl_ad` on
-   the policy and every integration;
+   `TTL-WKS`, `TTL-AD`, `TTL-WEB`, with namespaces `ttl_mal`, `ttl_wks`,
+   `ttl_ad`, `ttl_web` on the policy and every integration;
 3. writes each policy's enrollment token to `siem.env`.
 
 The owner also sets `siem_wan` in the host guard to `192.0.2.(100+S)` and
@@ -189,6 +191,8 @@ healthy under the range's policy.
   - `TTL-WKS`: `win2022-server-x64-template`, `win11-22h2-x64-enterprise-template`,
     `ubuntu-22.04-x64-server-template`, `kali-x64-desktop-template`
   - `TTL-AD`: `win2019-server-x64-template`, `win2016-server-x64-template`,
+    `kali-x64-desktop-template`
+  - `TTL-WEB`: `ubuntu-22.04-x64-server-template`, `win2022-server-x64-template`,
     `kali-x64-desktop-template`
 
 After that, agents create the range (`POST /ranges/create`). The owner
@@ -289,3 +293,35 @@ with a static inventory of the range IPs, with `ip_range` set to
 boundary forbids. The GOAD playbooks rename hosts and build the domains
 after Elastic Agent is installed. Check in Fleet that every host
 reports under its GOAD name.
+
+## TTL-WEB: web app attacks
+
+Built to record what an LLM pentest agent looks like from the target's
+side: network fingerprints (JA4, JA4H, HTTP/2) and Defend telemetry from
+exploited web servers.
+
+- `web01` (VLAN 150): Ubuntu with vulnerable web apps in Docker behind
+  nginx (planned: Juice Shop, crAPI or VAmPI, DVWA), each on HTTPS and on
+  plain HTTP so Zeek can fingerprint headers (JA4H). Zeek with the JA4
+  package runs on web01 itself and ships its logs through Elastic Agent.
+- `iis01` (VLAN 150): Windows Server 2022 with IIS and a vulnerable
+  ASP.NET app, not domain joined, running Defend, for Windows web-shell
+  telemetry. Microsoft Defender has to be turned off by the IIS role (the
+  domain GPO used in TTL-WKS doesn't apply here).
+- `atk` (VLAN 159): Kali running ARTEX in Docker, with the Anthropic
+  and OpenAI APIs. It keeps internet in testing mode; the targets are
+  snapshotted and lose internet, so each session starts clean.
+
+The roles that set up the apps, Zeek, IIS and ARTEX are not written yet;
+the config deploys the bare VMs. ARTEX is built from a pinned commit, and
+its LLM API keys live only on atk, never in the repo or the build log.
+ARTEX's scope is set to `10.S.150.0/24` for every task.
+
+Each session, enter testing mode and allow TTL-SIEM through it
+(`POST /testing/allow` with `{"ips": ["192.0.2.(100+S)"]}`, as for
+TTL-MAL), or the targets' Elastic Agents can't report.
+
+Runs to compare, so each indicator can be traced to its cause: the same
+tools by hand from atk (baseline), ARTEX with traffic capture off (the
+tools' own fingerprints, the agent's behavior), and ARTEX with capture on
+(every HTTP(S) request re-sent by its Go MITM proxy).

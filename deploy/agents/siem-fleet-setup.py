@@ -12,7 +12,7 @@ TTL_SIEM_ELASTIC_PASSWORD from ~/.config/ttl/siem.env, then:
    on the Elastic VM, to https://TTL_SIEM_WAN:9200 (over SSH, then restarts
    Kibana). Basic has no per-policy outputs, so Elastic's own agent uses the
    WAN address too, through the router's hairpin rules;
-2. copies Ludus-Agent-Policy once per test range (TTL-MAL, TTL-WKS, TTL-AD)
+2. copies Ludus-Agent-Policy once per test range (TTL-MAL, TTL-WKS, TTL-AD, TTL-WEB)
    with that range's namespace, on its integrations too;
 3. writes each policy's enrollment token to siem.env as
    TTL_<RANGE>_ENROLLMENT_TOKEN.
@@ -35,7 +35,7 @@ import urllib.request
 
 ENV = os.path.expanduser("~/.config/ttl/siem.env")
 SOURCE_POLICY = "Ludus-Agent-Policy"
-RANGES = {"TTL-MAL": "ttl_mal", "TTL-WKS": "ttl_wks", "TTL-AD": "ttl_ad"}
+RANGES = {"TTL-MAL": "ttl_mal", "TTL-WKS": "ttl_wks", "TTL-AD": "ttl_ad", "TTL-WEB": "ttl_web"}
 WAN_ID = "ttl-siem-wan"
 KIBANA_YML = "/opt/elastic_container/kibana.yml"
 # Range VM passwords are lab credentials, not secrets (Ludus default: debian).

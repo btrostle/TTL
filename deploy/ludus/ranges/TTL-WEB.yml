@@ -1,0 +1,93 @@
+# yaml-language-server: $schema=https://docs.ludus.cloud/schemas/range-config.json
+#
+# TTL-WEB: web application attacks by an LLM pentest agent (ARTEX). About
+# 25 GB RAM.
+# - web01 (VLAN 150): Ubuntu running vulnerable web apps in Docker behind
+#   nginx, with Zeek (JA4/JA4H) and Elastic Agent. Network fingerprints of
+#   the attacker come from here.
+# - iis01 (VLAN 150): Windows Server 2022 running IIS with a vulnerable
+#   ASP.NET app, and Elastic Defend, for Windows web-shell telemetry.
+# - atk (VLAN 159): Kali running ARTEX in Docker; its own tools serve the
+#   hand-run baseline. It needs the internet
+#   for the Anthropic and OpenAI APIs, so it stays online in testing mode.
+# Testing mode snapshots the two targets (so web shells and changed apps are
+# reverted when it ends) and cuts their internet. See docs/ranges.md.
+#
+# The target and ARTEX setup (apps, Zeek, IIS) are roles still to be
+# written; until then this config deploys the bare VMs.
+
+# Windows reads the Proxmox host's clock as local time in this zone, so it
+# must be the host's zone or Windows clocks (and Elastic timestamps) are
+# hours off. TTL_TIMEZONE (a tz name such as Region/City) is filled from
+# siem.env at upload, so the owner's zone stays out of this public repo.
+defaults:
+  timezone: "TTL_TIMEZONE"
+
+# Elastic Agent enrolls in the shared Elastic on TTL-SIEM (see
+# TTL-SIEM.yml). Replace both placeholders when uploading the config:
+# TTL_SIEM_WAN is TTL-SIEM's router address, 192.0.2.(100 + its range
+# number), and TTL_WEB_ENROLLMENT_TOKEN is the enrollment token of the
+# TTL-WEB agent policy. Never commit the real token.
+global_role_vars:
+  ludus_elastic_fleet_server: "https://TTL_SIEM_WAN:8220"
+  ludus_elastic_enrollment_token: "TTL_WEB_ENROLLMENT_TOKEN"
+
+router:
+  vm_name: "{{ range_id }}-router-debian12-x64"
+  hostname: "{{ range_id }}-router"
+  template: debian-12-x64-server-template
+  ram_gb: 1
+  cpus: 2
+
+ludus:
+  - vm_name: "{{ range_id }}-web01"
+    hostname: "{{ range_id }}-web01"
+    template: ubuntu-22.04-x64-server-template
+    vlan: 150
+    ip_last_octet: 11
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    roles:
+      - badsectorlabs.ludus_elastic_agent
+    testing:
+      snapshot: true # reverted when testing mode ends
+      block_internet: true
+
+  - vm_name: "{{ range_id }}-iis01"
+    hostname: "{{ range_id }}-iis01"
+    template: win2022-server-x64-template
+    vlan: 150
+    ip_last_octet: 12
+    ram_gb: 8
+    cpus: 4
+    windows:
+      sysprep: true
+    # Not domain joined. Microsoft Defender stays on until the IIS role
+    # turns it off (it would block web shells); Defend records either way.
+    roles:
+      - ttl_time_sync # clock from NTP or the domain
+      - badsectorlabs.ludus_elastic_agent
+    testing:
+      snapshot: true # reverted when testing mode ends
+      block_internet: true
+
+  - vm_name: "{{ range_id }}-atk"
+    hostname: "{{ range_id }}-atk"
+    template: kali-x64-desktop-template
+    vlan: 159
+    ip_last_octet: 1
+    ram_gb: 8
+    cpus: 4
+    linux: true
+    testing:
+      snapshot: false # keeps ARTEX, its database and its run records
+      block_internet: false # ARTEX needs the LLM APIs
+
+network:
+  # Layer 1 of 2: the range router never forwards to private networks
+  # outside the range. Layer 2 is a firewall on the Ludus host that agents
+  # cannot change. Keep this block; see docs/ranges.md.
+  always_blocked_networks:
+    - 192.168.0.0/16
+    - 172.16.0.0/12
